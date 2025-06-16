@@ -1,0 +1,26 @@
+import turtle
+
+screen = turtle.Screen()
+t = turtle.Turtle()
+screen.title("Resultado - Exemplo 3")
+t.speed(0) # Velocidade maxima
+
+# Declaracao de variaveis
+lado = 0
+cor = ""
+
+# Atribuicoes iniciais
+lado = 5
+screen.bgcolor("black")
+t.pensize(2)
+
+# Laco de repeticao
+    for _ in range(50) :
+    t.pencolor("cyan")
+
+    # Comandos de desenho e atualizacao
+    t.forward( lado )
+    t.right(90)
+    lado = lado + 5
+
+turtle.done()

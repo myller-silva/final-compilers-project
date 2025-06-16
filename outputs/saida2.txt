@@ -1,0 +1,25 @@
+import turtle
+
+screen = turtle.Screen ()
+t = turtle.Turtle ()
+screen.title ("Resultado - Exemplo 2")
+
+# Declaracao de variaveis
+tamanho_lado = 0
+
+# Atribuicao de variaveis
+tamanho_lado = 200
+
+# Comandos de desenho
+t.forward ( tamanho_lado )
+t.right (144)
+t.forward ( tamanho_lado )
+t.right (144)
+t.forward ( tamanho_lado )
+t.right (144)
+t.forward ( tamanho_lado )
+t.right (144)
+t.forward ( tamanho_lado )
+t.right (144)
+
+turtle.done ()

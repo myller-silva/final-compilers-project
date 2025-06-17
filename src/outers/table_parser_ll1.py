@@ -33,256 +33,230 @@ class Production:
 
     def __repr__(self):
         arrow = "→"
-        rhs_str = " ".join(map(str, self.rhs)) if self.rhs else str(EPSILON)
+        rhs_str = " ".join(map(str, self.rhs)) if self.rhs else str(Grammar.EPSILON)
         return f"{self.lhs} {arrow} {rhs_str}"
 
 
-EPSILON = Symbol("ε")
-EOF = Terminal("$")  # Símbolo de fim de arquivo (EOF)
+class Grammar:
+    EPSILON = Symbol("ε")
+    EOF = Terminal("$")
 
+    def __init__(self, productions: list[Production], start_symbol: NonTerminal):
+        self.productions = productions
+        self.start_symbol = start_symbol
+        self.terminals = self._get_terminals()
+        self.non_terminals = self._get_non_terminals()
+        self.first_sets = self.compute_first_sets()
+        self.follow_sets = self.compute_follow_sets()
 
-def compute_first_sets(grammar: list[Production]):
-    """Calcula os conjuntos FIRST para uma gramática livre de contexto."""
-    first = defaultdict(set)
+    def _get_terminals(self):
+        terminals = set({Grammar.EOF})
+        for prod in self.productions:
+            for sym in prod.rhs:
+                if isinstance(sym, Terminal):
+                    terminals.add(sym)
+        return terminals
 
-    def first_of(symbol):
-        if isinstance(symbol, Terminal):
-            return {symbol}
-        return first[symbol]
+    def _get_non_terminals(self):
+        non_terminals = set()
+        for prod in self.productions:
+            non_terminals.add(prod.lhs)
+        return non_terminals
 
-    changed = True
-    while changed:
-        changed = False
-        for prod in grammar:
-            lhs, rhs = prod.lhs, prod.rhs
-            original_size = len(first[lhs])
+    def compute_first_sets(self):
+        first = defaultdict(set)
 
-            if len(rhs) == 1 and rhs[0] == EPSILON:
-                first[lhs].add(EPSILON)
-            else:
-                nullable = True
-                for symbol in rhs:
-                    symbol_first = first_of(symbol)
-                    first[lhs].update(symbol_first - {EPSILON})
-                    if EPSILON not in symbol_first:
-                        nullable = False
-                        break
-                if nullable:
-                    first[lhs].add(EPSILON)
+        def first_of(symbol):
+            if isinstance(symbol, Terminal):
+                return {symbol}
+            return first[symbol]
 
-            if len(first[lhs]) > original_size:
-                changed = True
+        changed = True
+        while changed:
+            changed = False
+            for prod in self.productions:
+                lhs, rhs = prod.lhs, prod.rhs
+                original_size = len(first[lhs])
 
-    return first
+                if len(rhs) == 1 and rhs[0] == Grammar.EPSILON:
+                    first[lhs].add(Grammar.EPSILON)
+                else:
+                    nullable = True
+                    for symbol in rhs:
+                        symbol_first = first_of(symbol)
+                        first[lhs].update(symbol_first - {Grammar.EPSILON})
+                        if Grammar.EPSILON not in symbol_first:
+                            nullable = False
+                            break
+                    if nullable:
+                        first[lhs].add(Grammar.EPSILON)
 
+                if len(first[lhs]) > original_size:
+                    changed = True
+        return first
 
+    def compute_follow_sets(self):
+        follow = defaultdict(set)
+        follow[self.start_symbol].add(Grammar.EOF)
+        changed = True
+        while changed:
+            changed = False
+            for prod in self.productions[::-1]:
+                lhs, rhs = prod.lhs, prod.rhs
+                trailer = follow[lhs].copy()
+                for i in reversed(range(len(rhs))):
+                    symbol = rhs[i]
+                    if isinstance(symbol, NonTerminal):
+                        original_size = len(follow[symbol])
+                        follow[symbol].update(trailer)
+                        if Grammar.EPSILON in self.first_sets[symbol]:
+                            trailer = trailer.union(
+                                self.first_sets[symbol] - {Grammar.EPSILON}
+                            )
+                        else:
+                            trailer = self.first_sets[symbol] - {Grammar.EPSILON}
+                        if len(follow[symbol]) > original_size:
+                            changed = True
+                    elif isinstance(symbol, Terminal):
+                        trailer = {symbol}
+        return follow
 
-def compute_follow_sets(
-    grammar: list[Production], start_symbol: NonTerminal, first_sets: dict
-):
-    """Calcula os conjuntos FOLLOW para uma gramática livre de contexto."""
-    follow = defaultdict(set)
-    follow[start_symbol].add(EOF)
-
-    changed = True
-    while changed:
-        changed = False
-        for prod in grammar[::-1]:  # Percorre as produções na ordem inversa
-            lhs, rhs = prod.lhs, prod.rhs
-            trailer = follow[lhs].copy()
-
-            for i in reversed(
-                range(len(rhs))
-            ):  # Percorre o lado direito da produção de trás para frente
-                symbol = rhs[i]
-
-                if isinstance(symbol, NonTerminal):
-                    original_size = len(follow[symbol])
-                    follow[symbol].update(trailer)
-
-                    if EPSILON in first_sets[symbol]:
-                        trailer = trailer.union(first_sets[symbol] - {EPSILON})
-                    else:
-                        trailer = first_sets[symbol] - {EPSILON}
-
-                    if len(follow[symbol]) > original_size:
-                        changed = True
-
-                elif isinstance(symbol, Terminal):
-                    trailer = {symbol}  # trailer vira o próprio terminal
-
-    return follow
-
-
-# Exemplo de uso
-
-S, A, B = [ NonTerminal(name) for name in ["S", "A", "B"]]
-a, b, c, d = [ Terminal(name) for name in ["a", "b", "c", "d"]]
-
-
-grammar = [
-    Production(S, [a, A, B, b]),
-    Production(A, [c]),
-    Production(A, [EPSILON]),
-    Production(B, [d]),
-    Production(B, [EPSILON]),
-]
-
-for prod in grammar:
-    print(prod)
-
-
-def get_terminals(grammar):
-    terminals = set({EOF})
-    for prod in grammar:
-        for sym in prod.rhs:
+    def first_rhs(self, symbols: list[Symbol]) -> set:
+        result = set()
+        for sym in symbols:
             if isinstance(sym, Terminal):
-                terminals.add(sym)
-    return terminals
-
-
-def get_non_terminals(grammar):
-    non_terminals = set()
-    for prod in grammar:
-        non_terminals.add(prod.lhs)
-    return non_terminals
-
-
-print("Terminais da gramática:")
-terminals = get_terminals(grammar)
-print(terminals)
-print("Não terminais da gramática:")
-non_terminals = get_non_terminals(grammar)
-print(non_terminals)
-
-
-first_sets = compute_first_sets(grammar)
-follow_sets = compute_follow_sets(grammar, S, first_sets)
-
-
-# -----------
-print("\nConjuntos FIRST:")
-for nt, first in first_sets.items():
-    print(f"{nt}: {first}")
-
-print("\nConjuntos FOLLOW:")
-for nt, follow in follow_sets.items():
-    print(f"{nt}: {follow}")
-
-
-# ----------------------------
-# Construção da tabela LL(1)
-# ----------------------------
-
-
-def first_rhs(symbols: list[Symbol], first_sets: dict[Symbol, set]) -> set:
-    """Calcula o conjunto FIRST para uma sequência de símbolos (não terminais e terminais)."""
-
-    result = set()
-    for sym in symbols:
-        if isinstance(sym, Terminal):
-            result.add(sym)
-            break
-        elif isinstance(sym, NonTerminal):
-            result.update(first_sets[sym] - {EPSILON})
-            if EPSILON not in first_sets[sym]:
+                result.add(sym)
                 break
-    else:
-        result.add(EPSILON)
-    return result
-
-
-def build_ll1_table(grammar, first_sets, follow_sets):
-    table = {}
-
-    for prod in grammar:
-        lhs, rhs = prod.lhs, prod.rhs
-        first_of_rhs = first_rhs(rhs, first_sets)
-
-        for terminal in first_of_rhs:
-            if terminal != EPSILON:
-                table[(lhs, terminal)] = prod
-
-        if EPSILON in first_of_rhs:
-            for terminal in follow_sets[lhs]:
-                table[(lhs, terminal)] = prod
-
-    return table
-
-
-ll1_table = build_ll1_table(grammar, first_sets, follow_sets)
-
-def print_ll1_table(table, non_terminals, terminals):
-    terminals = sorted(terminals, key=lambda x: x.name)
-    non_terminals = sorted(non_terminals, key=lambda x: x.name)
-
-    header = f"{'NT/T':>5}"
-    for t in terminals:
-        header += f"{Fore.CYAN}{str(t):>20}{Style.RESET_ALL}"
-    print(header)
-    print(Fore.YELLOW + "-" * (5 + 20 * len(terminals)) + Style.RESET_ALL)
-
-    for nt in non_terminals:
-        row = f"{Fore.CYAN}{str(nt):>5}{Style.RESET_ALL}"
-        for t in terminals:
-            prod = table.get((nt, t))
-            if prod:
-                cell = f"{Fore.GREEN}{str(prod):>20}{Style.RESET_ALL}"
-            else:
-                cell = f"{Fore.RED}{'':>20}{Style.RESET_ALL}"
-            row += cell
-        print(row)
-
-
-print("\nTabela LL(1):")
-print_ll1_table(ll1_table, non_terminals, terminals)
-
-
-def ll1_parse(tokens, table, start_symbol):
-    """
-    tokens: lista de Terminals (incluindo EOF no final)
-    table: tabela LL(1) (dict)
-    start_symbol: símbolo inicial (NonTerminal)
-    """
-    stack = [EOF, start_symbol]
-    input_tokens = tokens[:]
-    cursor = 0
-    print(f"\nIniciando parsing LL(1) para entrada: {[str(t) for t in tokens]}")
-    while stack:
-        top = stack.pop()
-        current_token = input_tokens[cursor] if cursor < len(input_tokens) else None
-        print(f"Pilha: {[str(s) for s in stack[::-1]]} | Próximo token: {current_token}")
-        if isinstance(top, Terminal) or top == EOF:
-            if top == current_token:
-                print(f"Consome token: {current_token}")
-                cursor += 1
-            else:
-                print(f"Erro: esperado {top}, encontrado {current_token}")
-                return False
-        elif isinstance(top, NonTerminal):
-            prod = table.get((top, current_token))
-            if prod:
-                print(f"Aplica produção: {prod}")
-                # Empilha da direita para esquerda
-                rhs = prod.rhs
-                if not (len(rhs) == 1 and rhs[0] == EPSILON):
-                    for symbol in reversed(rhs):
-                        stack.append(symbol)
-            else:
-                print(f"Erro: nenhuma produção para ({top}, {current_token})")
-                return False
+            elif isinstance(sym, NonTerminal):
+                result.update(self.first_sets[sym] - {Grammar.EPSILON})
+                if Grammar.EPSILON not in self.first_sets[sym]:
+                    break
         else:
-            print(f"Erro: símbolo desconhecido na pilha: {top}")
+            result.add(Grammar.EPSILON)
+        return result
+
+
+class LL1Table:
+    def __init__(self, grammar: Grammar):
+        self.grammar = grammar
+        self.table = self.build_ll1_table()
+
+    def build_ll1_table(self):
+        table = {}
+        for prod in self.grammar.productions:
+            lhs, rhs = prod.lhs, prod.rhs
+            first_of_rhs = self.grammar.first_rhs(rhs)
+            for terminal in first_of_rhs:
+                if terminal != Grammar.EPSILON:
+                    table[(lhs, terminal)] = prod
+            if Grammar.EPSILON in first_of_rhs:
+                for terminal in self.grammar.follow_sets[lhs]:
+                    table[(lhs, terminal)] = prod
+        return table
+
+    def print_table(self):
+        terminals = sorted(self.grammar.terminals, key=lambda x: x.name)
+        non_terminals = sorted(self.grammar.non_terminals, key=lambda x: x.name)
+        header = f"{'NT/T':>5}"
+        for t in terminals:
+            header += f"{Fore.CYAN}{str(t):>20}{Style.RESET_ALL}"
+        print(header)
+        print(Fore.YELLOW + "-" * (5 + 20 * len(terminals)) + Style.RESET_ALL)
+        for nt in non_terminals:
+            row = f"{Fore.CYAN}{str(nt):>5}{Style.RESET_ALL}"
+            for t in terminals:
+                prod = self.table.get((nt, t))
+                if prod:
+                    cell = f"{Fore.GREEN}{str(prod):>20}{Style.RESET_ALL}"
+                else:
+                    cell = f"{Fore.RED}{'':>20}{Style.RESET_ALL}"
+                row += cell
+            print(row)
+
+
+class LL1Parser:
+    def __init__(self, table: LL1Table, start_symbol: NonTerminal):
+        self.table = table.table
+        self.start_symbol = start_symbol
+
+    def parse(self, tokens: list[Terminal]):
+        stack = [Grammar.EOF, self.start_symbol]
+        input_tokens = tokens[:]
+        cursor = 0
+        print(f"\nIniciando parsing LL(1) para entrada: {[str(t) for t in tokens]}")
+        while stack:
+            top = stack.pop()
+            current_token = input_tokens[cursor] if cursor < len(input_tokens) else None
+            print(
+                f"Pilha: {[str(s) for s in stack[::-1]]} | Próximo token: {current_token}"
+            )
+            if isinstance(top, Terminal) or top == Grammar.EOF:
+                if top == current_token:
+                    print(f"Consome token: {current_token}")
+                    cursor += 1
+                else:
+                    print(f"Erro: esperado {top}, encontrado {current_token}")
+                    return False
+            elif isinstance(top, NonTerminal):
+                prod = self.table.get((top, current_token))
+                if prod:
+                    print(f"Aplica produção: {prod}")
+                    rhs = prod.rhs
+                    if not (len(rhs) == 1 and rhs[0] == Grammar.EPSILON):
+                        for symbol in reversed(rhs):
+                            stack.append(symbol)
+                else:
+                    print(f"Erro: nenhuma produção para ({top}, {current_token})")
+                    return False
+            else:
+                print(f"Erro: símbolo desconhecido na pilha: {top}")
+                return False
+        if cursor == len(input_tokens):
+            print("Parsing bem-sucedido!")
+            return True
+        else:
+            print("Erro: tokens restantes após esvaziar a pilha.")
             return False
-    if cursor == len(input_tokens):
-        print("Parsing bem-sucedido!")
-        return True
-    else:
-        print("Erro: tokens restantes após esvaziar a pilha.")
-        return False
 
 
-# Exemplo de uso do parser LL(1)
-test_input = [a, b, EOF]
-print("\nTestando parsing LL(1):")
-ll1_parse(test_input, ll1_table, S)
+# ----------------------
+# Exemplo de uso
+# ----------------------
+if __name__ == "__main__":
+    # Definição dos símbolos
+    S, A, B = [NonTerminal(name) for name in ["S", "A", "B"]]
+    a, b, c, d = [Terminal(name) for name in ["a", "b", "c", "d"]]
+
+    # Definição da gramática
+    productions = [
+        Production(S, [a, A, B, b]),
+        Production(A, [c]),
+        Production(A, [Grammar.EPSILON]),
+        Production(B, [d]),
+        Production(B, [Grammar.EPSILON]),
+    ]
+    grammar = Grammar(productions, S)
+
+    print("Produções:")
+    for prod in grammar.productions:
+        print(prod)
+    print("\nTerminais da gramática:")
+    print(grammar.terminals)
+    print("Não terminais da gramática:")
+    print(grammar.non_terminals)
+
+    print("\nConjuntos FIRST:")
+    for nt, first in grammar.first_sets.items():
+        print(f"{nt}: {first}")
+    print("\nConjuntos FOLLOW:")
+    for nt, follow in grammar.follow_sets.items():
+        print(f"{nt}: {follow}")
+
+    ll1_table = LL1Table(grammar)
+    print("\nTabela LL(1):")
+    ll1_table.print_table()
+
+    parser = LL1Parser(ll1_table, S)
+    test_input = [a, b, Grammar.EOF]
+    print("\nTestando parsing LL(1):")
+    parser.parse(test_input)

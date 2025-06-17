@@ -1,8 +1,13 @@
+from anytree import Node
+import re
+
+
 class RecursiveDescentParser:
     def __init__(
         self,
         grammar: list[tuple[str, list[str]]],
         start_symbol: str,
+        debug: bool = False,
     ):
         """
         Inicializa o parser com uma gramática e um símbolo inicial.
@@ -15,6 +20,7 @@ class RecursiveDescentParser:
         self.start_symbol = start_symbol
         self.tokens: list[str] = []
         self.pos: int = 0
+        self.debug = debug
 
     def _organize_grammar(
         self, rules: list[tuple[str, list[str]]]
@@ -35,7 +41,7 @@ class RecursiveDescentParser:
             grammar[left].append(right)
         return grammar
 
-    def parse(self, tokens: list[tuple[str, str]]) -> tuple[str, list]:
+    def parse(self, tokens: list[tuple[str, str]]):
         """
         Realiza a análise sintática dos tokens fornecidos.
 
@@ -52,7 +58,7 @@ class RecursiveDescentParser:
 
         self.pos = 0
         self.last_valid_token = None  # Armazena o último token válido
-        success, tree = self._parse_symbol(self.start_symbol)
+        success, tree = self._parse_symbol(self.start_symbol, parent=None)
         if success and self.pos == len(self.tokens):
             return tree
         else:
@@ -70,7 +76,7 @@ class RecursiveDescentParser:
             return self.tokens[self.pos]
         return None
 
-    def _parse_symbol(self, symbol: str) -> tuple[bool, tuple | str | None]:
+    def _parse_symbol(self, symbol: str, parent=None):
         """
         Tenta analisar um símbolo da gramática.
 
@@ -90,7 +96,8 @@ class RecursiveDescentParser:
             if current_token and current_token[0] == symbol:
                 self.last_valid_token = current_token  # Atualiza o último token válido
                 self.pos += 1
-                return True, current_token  # Retorna o token completo
+                node = Node(f"{symbol}: {current_token[1]}", parent=parent)
+                return True, node  # Retorna o token completo
             else:
                 encontrado = current_token[1] if current_token else "EOF"
                 raise SyntaxError(
@@ -101,18 +108,19 @@ class RecursiveDescentParser:
             snapshot = self.pos  # salva a posição atual para backtrack
             children = []
             success = True
+            node = Node(symbol, parent=parent)
             for sym in production:  # cada símbolo na produção
                 try:
-                    ok, node = self._parse_symbol(sym)
+                    ok, child_node = self._parse_symbol(sym, parent=node)
                 except SyntaxError as e:
                     success = False
                     break
                 if not ok:
                     success = False
                     break
-                children.append(node)
+                children.append(child_node)
             if success:
-                return True, (symbol, children)
+                return True, node
             self.pos = snapshot  # backtrack
 
         current_token = self.tokens[self.pos] if self.pos < len(self.tokens) else None
@@ -122,66 +130,81 @@ class RecursiveDescentParser:
             f"\nUltimo token válido: '{self.last_valid_token[1] if self.last_valid_token else 'N/A'}'."
         )
 
+    @staticmethod
+    def to_abstract_syntax_tree(
+        node, ignored_terms=set(), flattening_transforms=set(), parent=None
+    ):
+        """
+        Converte uma árvore de derivação em uma árvore sintática abstrata (AST).
+        Args:
+            node: Nó da árvore de derivação.
+            ignored_terms: Conjunto de termos a serem ignorados.
+            flattening_transforms: Mapeamento de transformações para aplanamento.
+            parent: Nó pai na árvore AST.
+        Returns:
+            Um nó da árvore sintática abstrata (AST) ou None se o nó for ignorado.
+        """
 
-def transformar_lista_aplanada(simbolo_lista):
-    def transform(filhos, derivacao_para_ast, ignorar, transformar):
-        itens = []
-        for filho in filhos:
-            ast = derivacao_para_ast(filho, ignorar, transformar)
-            if ast is None:
-                continue
-            # Se o filho também é o mesmo símbolo, aplainar
-            if isinstance(ast, tuple) and ast[0] == simbolo_lista:
-                itens.extend(ast[1])
-            else:
-                itens.append(ast)
-        return (simbolo_lista, itens)
-
-    return transform
-
-def derivacao_para_ast(node, ignorar=None, transformar=None):
-    """
-    Converte uma árvore de derivação em uma árvore sintática abstrata (AST).
-    - node: nó da árvore de derivação (tupla ou token)
-    - ignorar: conjunto de símbolos/terminais a serem ignorados (ex: pontuação, palavras-chave)
-    - transformar: dict opcional {simbolo: função(children) -> nó_ast}
-    """
-    if ignorar is None:
-        ignorar = set()
-    if transformar is None:
-        transformar = dict()
-
-    # Nó terminal (token): ('TIPO', 'valor')
-    if isinstance(node, tuple) and len(node) == 2 and isinstance(node[1], str):
-        tipo, valor = node
-        if tipo in ignorar:
-            return None
-        # return node  # Ou só valor, se preferir
-        return valor
-
-    # Nó não-terminal: ('Simbolo', [filhos])
-    if isinstance(node, tuple) and len(node) == 2 and isinstance(node[1], list):
-        simbolo, filhos = node
-        # Se houver função de transformação para este símbolo, use-a
-        if simbolo in transformar:
-            return transformar[simbolo](
-                filhos, derivacao_para_ast, ignorar, transformar
+        label = node.name  # Nó terminal: formato 'TIPO: valor'
+        if ": " in label:
+            node_type, node_value = (
+                re.match(r"^(.*?): (.*)$", label).groups()
+                if ": " in label
+                else (label, None)
             )
-        # Caso padrão: processa filhos recursivamente, removendo os ignorados
-        filhos_ast = []
-        for filho in filhos:
-            ast = derivacao_para_ast(filho, ignorar, transformar)
-            if ast is not None:
-                filhos_ast.append(ast)
-        # Se só tem um filho, pode "colapsar" o nó
-        if len(filhos_ast) == 1:
-            return filhos_ast[0]
-        # Se não tem filhos, retorna None
-        if not filhos_ast:
-            return None
-        return (simbolo, filhos_ast)
-    # Caso não reconhecido
-    return node
+            if node_type in ignored_terms:
+                return None
+            return (
+                Node(f"{node_type}: {node_value}", parent=parent)
+                if node_value is not None
+                else Node(node_type, parent=parent)
+            )
+        else:
+            symbol_name = label
+            filhos_nodes = list(node.children)
+            child_ast_nodes = []
+            for child in filhos_nodes:
+                ast_child = RecursiveDescentParser.to_abstract_syntax_tree(child, ignored_terms, flattening_transforms, parent=None)
+                if ast_child is not None:
+                    child_ast_nodes.append(ast_child)
+            
+            if symbol_name in flattening_transforms: # Transformação customizada. A função de transformação deve criar e retornar um Node do anytree
+                return flattening_transforms[symbol_name](
+                    child_ast_nodes,
+                    RecursiveDescentParser.to_abstract_syntax_tree,
+                    ignored_terms,
+                    flattening_transforms,
+                    parent,
+                )
+            if not child_ast_nodes:
+                return None
+            ast_node = Node(symbol_name, parent=parent)
+            for child in child_ast_nodes:
+                child.parent = ast_node
+            return ast_node
+    
+    @staticmethod
+    def flatten_children_anytree(simbolo_lista):
+        def transform(
+            filhos, to_ast, ignorar, transformar, parent
+        ):
+            itens = []
+            for filho in filhos:
+                if filho is None:
+                    continue
+                # Se o filho também é o mesmo símbolo, aplainar
+                if isinstance(filho, Node) and filho.name == simbolo_lista:
+                    itens.extend(list(filho.children))
+                else:
+                    itens.append(filho)
+            if not itens:
+                return None
+            node = Node(simbolo_lista, parent=parent)
+            for item in itens:
+                item.parent = node
+            return node
+        return transform
+
 
 
 # if __name__ == "__main__":
@@ -219,9 +242,9 @@ def derivacao_para_ast(node, ignorar=None, transformar=None):
 if __name__ == "__main__":
     from constants import *
     from tokenizer import Tokenizer
-    from utils import print_grammar, print_tree_nice
+    from utils import print_grammar
+    from utils import print_anytree
 
-    # Exemplo simples
     grammar = [
         ("Programa", ["Bloco"]),
         ("Bloco", [KW_INICIO_BLOCO, "Comandos", KW_FIM_BLOCO]),
@@ -249,24 +272,28 @@ if __name__ == "__main__":
 
     tokens = Tokenizer(word).tokenize()
     parser = RecursiveDescentParser(grammar, "Programa")
-    concret_tree = parser.parse(tokens)
-    print("-- Árvore de Derivação --")
-    print_tree_nice(concret_tree)
+    derivation_tree = parser.parse(tokens)
+
+    print("\n-- Árvore de Derivação --")
+    print_anytree(derivation_tree)
 
     print("\n-- Árvore Sintática Abstrata (AST) --")
-    transformar = {
-        "Comandos": transformar_lista_aplanada("Comandos"),
-        "DeclaracoesVariaveis": transformar_lista_aplanada("DeclaracoesVariaveis"),
-        "Expressao": transformar_lista_aplanada("Expressao"),
-        # "ExpressaoR": transformar_lista_aplanada("ExpressaoR"),
+    flattening_transforms_map = {
+        "Comandos": parser.flatten_children_anytree("Comandos"),
+        "DeclaracoesVariaveis": parser.flatten_children_anytree(
+            "DeclaracoesVariaveis"
+        ),
+        "Expressao": parser.flatten_children_anytree("Expressao"),
+        "ExpressaoR": parser.flatten_children_anytree("ExpressaoR"),
     }
-    ast = derivacao_para_ast(
-        concret_tree,
-        ignorar={  # Ignorar pontuação e palavras-chave
+    ast_node = parser.to_abstract_syntax_tree(
+        derivation_tree,
+        ignored_terms={  # Ignorar pontuação e palavras-chave
             PONTO_VIRGULA,
             KW_INICIO_BLOCO,
             KW_FIM_BLOCO,
         },
-        transformar=transformar,
+        flattening_transforms=flattening_transforms_map,
+        parent=None,
     )
-    print_tree_nice(ast)
+    print_anytree(ast_node)

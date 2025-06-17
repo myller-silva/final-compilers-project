@@ -174,7 +174,7 @@ class LL1Table:
             print(row)
 
 
-class LL1Parser:
+class LL1ParserTable:
     def __init__(self, table: LL1Table, start_symbol: NonTerminal):
         self.table = table.table
         self.start_symbol = start_symbol
@@ -256,7 +256,7 @@ if __name__ == "__main__":
     print("\nTabela LL(1):")
     ll1_table.print_table()
 
-    parser = LL1Parser(ll1_table, S)
-    test_input = [a, b, Grammar.EOF]
+    tokens = [a, b, Grammar.EOF]
+    parser = LL1ParserTable(ll1_table, S)
     print("\nTestando parsing LL(1):")
-    parser.parse(test_input)
+    parser.parse(tokens)

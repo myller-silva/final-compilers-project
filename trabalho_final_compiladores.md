@@ -1,8 +1,4 @@
-Professor: Hericson Araújo
-
-hericson.araujo@ifce.edu.br
-
-Disciplina: Compiladores
+# Disciplina: Compiladores
 
 ## Trabalho Final - Compiladores 2025.1
 
@@ -37,41 +33,67 @@ O bloco principal do programa inicia com inicio e termina com fim .
 
 ## 4.1 Tipos de Dados
 
-Esta seção detalha os tipos de dados suportados pela linguagem TurtleScript inteiro Utilizado para valores numéricos inteiros. É aplicado em comandos de movimento para especificar distâncias, em comandos de rotação para ângulos e no comando de repetição.
+Esta seção detalha os tipos de dados suportados pela linguagem TurtleScript
 
-texto Utilizado para valores de string. É essencial para definir cores por nome e em outros comandos que manipulam texto.
+- **inteiro** Utilizado para valores numéricos inteiros. É aplicado em comandos de movimento para especificar distâncias, em comandos de rotação para ângulos e no comando de repetição.
 
-real Tipo de dado para representar números de ponto flutuante. Permitiria maior precisão em distâncias e ângulos (ex: avancar 10.5; ou girar\_direita 22.5;).
+- **texto** Utilizado para valores de string. É essencial para definir cores por nome e em outros comandos que manipulam texto.
 
-logico Tipo de dado booleano que pode assumir os valores verdadeiro ou falso. Seria a base para novas estruturas de controle condicionais (ex: se...fim\_se).
+- **real** Tipo de dado para representar números de ponto flutuante. Permitiria maior precisão em distâncias e ângulos (ex: avancar 10.5; ou girar\_direita 22.5;).
+
+- **logico** Tipo de dado booleano que pode assumir os valores verdadeiro ou falso. Seria a base para novas estruturas de controle condicionais (ex: se...fim\_se).
 
 ## 4.2 Estrutura do Programa
 
 Todo programa em TurtleScript deve ser contido dentro de um bloco principal delimitado.
 
-|                  | Comando Descrição                                                                                                                            |
-|------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| inicio  ...  fim | Delimita o escopo principal do programa. Todo o código executável e as declarações de variáveis devem estar entre estas duas palavras-chave. |
+## Tabela de Comando Principal
+
+| Comando | Descrição|
+|-|-|
+| inicio ... fim | Delimita o escopo principal do programa. Todo o código executável e as declarações de variáveis devem estar entre estas duas palavras-chave. |
+<!-- fazer tabela -->
 
 ## Exemplo de Uso
 
-```
-1 inicio 2 // Seu codigo vai aqui 3 fim
+```js
+1 inicio 
+2 // Seu codigo vai aqui 
+3 fim
 ```
 
 ## 4.3 Declaração e Atribuição de Variáveis
 
 A linguagem suporta variáveis com tipagem estática, que devem ser declaradas no início do escopo.
 
-|                   | Sintaxe Descrição                                                                                                                  |
-|-------------------|------------------------------------------------------------------------------------------------------------------------------------|
-| var               | tipo: id1, ...; Declara uma ou mais variáveis de um determinado tipo. Os tipos suportados são inteiro ,  texto ,  real  e logico . |
-| id = <expressao>; | Atribui um valor a uma variável já declarada. A expressão pode ser um literal ou outra variável                                    |
+|Sintaxe|Descrição|
+|-|-|
+| var tipo: id1, ...; | Declara uma ou mais variáveis de um determinado tipo. Os tipos suportados são **inteiro** ,  **texto** ,  **real**  e **logico** . |
+| id = \<expressao>; | Atribui um valor a uma variável já declarada. A expressão pode ser um literal ou outra variável                                    |
 
 ## 4.4 Exemplo de Uso
 
-```
-1 inicio 2 // ---Declaracao de Variaveis ---3 // A declaracao de todas as variaveis ocorre no inicio do escopo . 4 var inteiro : passo , repeticoes ; 5 var texto : cor_fundo , cor_linha , titulo ; 6 var real : angulo_preciso ; 7 var logico : desenhar_forma ; 8 9 // ---Atribuicoes de Valores ---10 // Atribuicao a variaveis do tipo ' inteiro '. 11 passo = 150; 12 repeticoes = 5; 13 14 // Atribuicao a variaveis do tipo ' texto ' com string . 15 titulo = " Desenho de uma Estrela "; 16 cor_fundo = " black " ; 17 cor_linha = " blue " ; 18 19 // Atribuicao a uma variavel do tipo ' real ' para maior precisao . 20 angulo_preciso = 144.0; 21 22 // Atribuicao a uma variavel do tipo ' logico '. 23 desenhar_forma = verdadeiro ; 24 25 fim
+```js
+inicio
+  //---Declaracao de Variaveis--
+  // A declaracao de todas as variaveis ocorre no inicio do escopo.
+  var inteiro: passo, repeticoes;
+  var texto: cor_fundo, cor_linha, titulo;
+  var real: angulo_preciso;
+  var logico: desenhar_forma;
+  //---Atribuicoes de Valores--
+  // Atribuicao a variaveis do tipo ’inteiro’.
+  passo = 150;
+  repeticoes = 5;
+  // Atribuicao a variaveis do tipo ’texto’ com string.
+  titulo = "Desenho de uma Estrela";
+  cor_fundo = "black";
+  cor_linha = "blue";
+  // Atribuicao a uma variavel do tipo ’real’ para maior precisao.
+  angulo_preciso = 144.0;
+  // Atribuicao a uma variavel do tipo ’logico’.
+  desenhar_forma = verdadeiro;
+fim
 ```
 
 Listing 1: Exemplo de uso com todos os tipos de dados.
@@ -84,14 +106,27 @@ Para aumentar o poder de expressão da linguagem TurtleScript, foram propostas n
 
 A estrutura se/senao permite que o programa tome decisões e execute blocos de código diferentes com base no resultado de uma expressão lógica. Isso é fundamental para a criação de algoritmos não triviais.
 
-|                                                                               | Sintaxe Descrição                                                   |
-|-------------------------------------------------------------------------------|---------------------------------------------------------------------|
-| se <expr_logica> entao ... fim_se se <expr_logica> entao ... senao ... fim_se | Executa um bloco de comandos se a expressão lógica for verdadeiro . |
+| Sintaxe|Descrição|
+|-|-|
+| se<expr_logica>entao ... fim_se | Executa um bloco de comandos se a expressão lógica for verdadeiro |
+| se <expr_logica>entao ... senao ... fim_se| Executa o primeiro bloco de comandos se a expressão for verdadeiro ; caso contrário, executa o bloco a pós o senao |
 
-## Exemplo de Uso
+## Exemplo de Uso 2
 
-```
-1 inicio 2 var inteiro : contador = 0; 3 4 repita 10 vezes 5 // Verifica se o contador e par ou impar 6 se ( contador % 2) == 0 entao 7 definir_cor " cyan " ; 8 senao 9 definir_cor " yellow " ; 10 fim_se ; 11 12 avancar 25; 13 contador = contador + 1; 14 fim_repita ; 15 fim
+```js
+inicio
+    var inteiro: contador = 0;
+    repita 10 vezes
+        // Verifica se o contador e par ou impar
+        se (contador % 2) == 0 entao
+            definir_cor "cyan";
+        senao
+            definir_cor "yellow";
+        fim_se;
+        avancar 25;
+        contador = contador + 1;
+    fim_repita;
+fim
 ```
 
 Listing 2: Uso do condicional para alternar cores.
@@ -100,60 +135,81 @@ Listing 2: Uso do condicional para alternar cores.
 
 Diferente do laço repita, que executa um número fixo de vezes, a estrutura enquanto executa um bloco de comandos continuamente enquanto uma condição lógica permanecer verdadeiro. Isso permite criar laços cujo número de iterações não é conhecido previamente.
 
-|                                              | Sintaxe Descrição                                                                                                |
-|----------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+|  Sintaxe |  Descrição |
+|-|-|
 | enquanto <expr_logica> faca ... fim_enquanto | Enquanto a expressão lógica for avaliada como verdadeiro, o bloco de comandos interno é executado repetidamente. |
 
-## Exemplo de Uso
+## Exemplo de Uso 3
 
-```
-1 inicio 2 var inteiro : lado = 10; 3 cor_de_fundo " black " ; 4 definir_cor " white " ; 5 6 // O laco continua apenas enquanto o lado for menor que 200 7 enquanto lado < 200 faca
-```
-
-```
-8 avancar lado ; 9 girar_direita 91; 10 11 // Incrementa a variavel de controle do laco 12 lado = lado + 2; 13 fim_enquanto ; 14 fim
+``` js
+inicio
+    var inteiro: lado = 10;
+    cor_de_fundo "black";
+    definir_cor "white";
+    // O laco continua apenas enquanto o lado for menor que 200
+    enquanto lado < 200 faca
+        avancar lado;
+        girar_direita 91;
+        // Incrementa a variavel de controle do laco
+        lado = lado + 2;
+    fim_enquanto;
+fim
 ```
 
 Listing 3: Desenhando uma espiral que cresce até um limite.
 
 ## Comandos de Movimento
 
-|                                                                                | Sintaxe Descrição                                                                                                                                                                                                                        |
-|--------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| avancar <expr>;  recuar <expr>;  girar_direita <expr>;  girar_esquerda <expr>; | Move a tartaruga para frente pela distância especificada. Move a tartaruga para trás pela distância especificada. Gira a tartaruga para a direita pelo ângulo especificado. Gira a tartaruga para a esquerda pelo ângulo especificado. |
+| Sintaxe | Descrição |
+|-|-|
+| avancar \<expr>;  recuar \<expr>;  girar_direita \<expr>;  girar_esquerda \<expr>; | Move a tartaruga para frente pela distância especificada. Move a tartaruga para trás pela distância especificada. Gira a tartaruga para a direita pelo ângulo especificado. Gira a tartaruga para a esquerda pelo ângulo especificado. |
 
 ## Comandos de Controle da Caneta
 
-|                                                                                   | Sintaxe Descrição                                                                                                                                       |
-|-----------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| levantar_caneta;  abaixar_caneta;  definir_cor <expr>;  definir_espessura <expr>; | Levanta a caneta, movendo sem desenhar. Abaixa a caneta, voltando a desenhar. Define a cor da linha (ex: "red"). Define a espessura da linha em pixels. |
+|Sintaxe| Descrição|
+|-|-|
+| levantar_caneta;  abaixar_caneta;  definir_cor \<expr>;  definir_espessura \<expr>; | Levanta a caneta, movendo sem desenhar. Abaixa a caneta, voltando a desenhar. Define a cor da linha (ex: "red"). Define a espessura da linha em pixels. |
 
 ## Comandos de Controle de Tela
 
-|                                    | Sintaxe Descrição                                               |
-|------------------------------------|-----------------------------------------------------------------|
-| cor_de_fundo <expr>;  limpar_tela; | Define a cor de fundo da tela. Apaga todos os desenhos da tela. |
+| Sintaxe | Descrição|
+|-|-|
+| cor_de_fundo \<expr>;  limpar_tela; | Define a cor de fundo da tela. Apaga todos os desenhos da tela. |
 
 ## Estrutura de Controle: Repetição
 
-|                                   | Sintaxe Descrição                                        |
-|-----------------------------------|----------------------------------------------------------|
-| repita  <num>  vezes  fim_repita; | ... Executa o bloco de comandos um número fixo de vezes. |
+| Sintaxe | Descrição|
+|-|-|
+| repita  \<num>  vezes  fim_repita; | ... Executa o bloco de comandos um número fixo de vezes. |
 
-## Exemplo de Uso
+## Exemplo de Uso 4
 
-```
-1 // Desenha um pentagono 2 repita 5 vezes 3 avancar 100; 4 girar_direita 72; 5 fim_repita ;
+```js
+// Desenha um pentagono
+repita 5 vezes
+    avancar 100;
+    girar_direita 72;
+fim_repita;
 ```
 
 ## 4.6 Catálogo de Comandos
 
-|                        | Categoria Comando TurtleScript Exemplo de Uso Código Python Gerado                                                                                                                                                             |                                                                               |                                                                                            |
-|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
-| Movimento              | avancar <expr>  recuar <expr>  girar_direita <expr>  girar_esquerda <expr>  ir_para <expr> <expr>                                                                                                                              | avancar 100;  recuar x;  girar_direita 90;  girar_esquerda 45;  ir_para 0 50; | turtle.forward(100) turtle.backward(x) turtle.right(90) turtle.left(45) turtle.goto(0, 50) |
-| Controle da Caneta     | levantar_caneta levantar_caneta; turtle.penup() abaixar_caneta abaixar_caneta; turtle.pendown() definir_cor <expr> definir_cor "blue"; turtle.pencolor("blue") definir_espessura <expr> definir_espessura 3; turtle.pensize(3) |                                                                               |                                                                                            |
-| Controle de Tela       | limpar_tela  cor_de_fundo <expr>                                                                                                                                                                                               | limpar_tela;  cor_de_fundo "black";                                           | turtle.clear() turtle.bgcolor("black")                                                     |
-| Estruturas de Controle | repita <num> vezes  se <expr> entao  se  ...  senao  enquanto <expr> faca                                                                                                                                                      | repita 4 vezes  se x > 10 entao  se cor=="azul" senao enquanto i < 10 faca    | for _ in range(4): if x > 10: if cor=="azul": ... else: while i < 10:                      |
+| Categoria               | Comando TurtleScript         | Exemplo de Uso           | Código Python Gerado        |
+|-------------------------|------------------------------|--------------------------|-----------------------------|
+| Movimento               | avancar [expr]               | avancar 100;             | turtle.forward(100)         |
+| Movimento               | recuar [expr]                | recuar x;                | turtle.backward(x)          |
+| Movimento               | girar_direita [expr]         | girar_direita 90;        | turtle.right(90)            |
+| Movimento               | girar_esquerda [expr]        | girar_esquerda 45;       | turtle.left(45)             |
+| Movimento               | ir_para [expr] [expr]        | ir_para 0 50;            | turtle.goto(0, 50)          |
+| Controle da Caneta      | levantar_caneta              | levantar_caneta;         | turtle.penup()              |
+| Controle da Caneta      | abaixar_caneta               | abaixar_caneta;          | turtle.pendown()            |
+| Controle da Caneta      | definir_cor [expr]           | definir_cor "blue";      | turtle.pencolor("blue")     |
+| Controle da Caneta      | definir_espessura [expr]     | definir_espessura 3;     | turtle.pensize(3)           |
+| Controle de Tela        | limpar_tela                  | limpar_tela;             | turtle.clear()              |
+| Controle de Tela        | cor_de_fundo [expr]          | cor_de_fundo "black";    | turtle.bgcolor("black")     |
+| Estruturas de Controle  | repita [num] vezes           | repita 4 vezes           | for _ in range(4):          |
+| Estruturas de Controle  | se [expr] entao              | se x > 10 entao          | if x > 10:                  |
+| Estruturas de Controle  | se ... senao                 | se cor=="azul" senao     | if cor=="azul": ... else:   |
 
 ## 4.7 Exemplo 1: Desenhando um Quadrado Simples
 
@@ -161,24 +217,41 @@ Este é o caso mais básico, usando apenas comandos de movimento diretos.
 
 ## TurtleScript (entrada1.txt)
 
-```
-1 inicio 2 // Desenha as quatro arestas do quadrado 3 avancar 150; 4 girar_direita 90; 5 6 avancar 150; 7 girar_direita 90; 8 9 avancar 150; 10 girar_direita 90; 11 12 avancar 150; 13 girar_direita 90; 14 fim
+```js
+inicio
+    // Desenha as quatro arestas do quadrado
+    avancar 150;
+    girar_direita 90;
+    avancar 150;
+    girar_direita 90;
+    avancar 150;
+    girar_direita 90;
+    avancar 150;
+    girar_direita 90;
+fim
 ```
 
 Listing 4: Código para desenhar um quadrado.
 
 ## Python Gerado (saida1.py)
 
-```
-1 import turtle 2 3 # ---Configuracao Padrao 4 screen = turtle . Screen ()
-```
-
-```
----
-```
-
-```
-5 t = turtle . Turtle () 6 screen . title ( " Resultado -Exemplo 1 " ) 7 8 # ---Codigo Gerado pelo Compilador ---9 t . forward (150) 10 t . right (90) 11 t . forward (150) 12 t . right (90) 13 t . forward (150) 14 t . right (90) 15 t . forward (150) 16 t . right (90) 17 18 # ---Finalizacao ---19 turtle . done ()
+``` python
+import turtle
+#---Configuracao Padrao--
+screen = turtle.Screen()
+t = turtle.Turtle()
+screen.title("Resultado- Exemplo 1")
+#--- Codigo Gerado pelo Compilador--
+t.forward(150)
+t.right(90)
+t.forward(150)
+t.right(90)
+t.forward(150)
+t.right(90)
+t.forward(150)
+t.right(90)
+#--- Finalizacao--
+turtle.done()
 ```
 
 Listing 5: Código Python gerado pelo compilador.
@@ -189,21 +262,51 @@ Este exemplo introduz a declaração e o uso de variáveis.
 
 ## TurtleScript (entrada2.txt)
 
-```
-1 inicio 2 var inteiro : tamanho_lado ; 3 tamanho_lado = 200; 4 5 // Desenha uma estrela de 5 pontas 6 avancar tamanho_lado ; 7 girar_direita 144; 8 9 avancar tamanho_lado ; 10 girar_direita 144; 11 12 avancar tamanho_lado ; 13 girar_direita 144; 14 15 avancar tamanho_lado ; 16 girar_direita 144; 17 18 avancar tamanho_lado ; 19 girar_direita 144; 20 fim
+```js
+inicio
+    var inteiro: tamanho_lado;
+    tamanho_lado = 200;
+    // Desenha uma estrela de 5 pontas
+    avancar tamanho_lado;
+    girar_direita 144;
+    avancar tamanho_lado;
+    girar_direita 144;
+    avancar tamanho_lado;
+    girar_direita 144;
+    avancar tamanho_lado;
+    girar_direita 144;
+    avancar tamanho_lado;
+    girar_direita 144;
+fim
 ```
 
 Listing 6: Código para desenhar uma estrela de 5 pontas.
 
 ## Python Gerado (saida2.py)
 
-```
-1 import turtle 2 3 screen = turtle . Screen () 4 t = turtle . Turtle () 5 screen . title ( " Resultado -Exemplo 2 " ) 6 7 # Declaracao de variaveis 8 tamanho_lado = 0 9 10 # Atribuicao de variaveis 11 tamanho_lado = 200 12 13 # Comandos de desenho 14 t . forward ( tamanho_lado ) 15 t . right (144) 16 t . forward ( tamanho_lado ) 17 t . right (144) 18 t . forward ( tamanho_lado ) 19 t . right (144) 20 t . forward ( tamanho_lado ) 21 t . right (144) 22 t . forward ( tamanho_lado ) 23 t . right (144)
-```
+```python
+import turtle
+screen = turtle.Screen()
+t = turtle.Turtle()
+screen.title("Resultado-Exemplo 2")
+# Declaracao de variaveis
+tamanho_lado = 0
+# Atribuicao de variaveis
+tamanho_lado = 200
+# Comandos de desenho
+t.forward(tamanho_lado)
+t.right(144)
+t.forward(tamanho_lado)
+t.right(144)
+t.forward(tamanho_lado)
+t.right(144)
+t.forward(tamanho_lado)
+t.right(144)
+t.forward(tamanho_lado)
+t.right(144)
 
-24
-
-## 25 turtle . done ()
+turtle.done()
+```
 
 Listing 7: Código Python com uso de variáveis.
 
@@ -213,16 +316,52 @@ Este exemplo avançado utiliza laços de repetição, variáveis e controle da c
 
 ## TurtleScript (entrada3.txt)
 
-```
-1 inicio 2 var inteiro : lado ; 3 var texto : cor ; 4 5 lado = 5; 6 cor_de_fundo " black " ; 7 definir_espessura 2; 8 9 repita 50 vezes 10 // Muda a cor da linha a cada iteracao 11 definir_cor " cyan " ; 12 13 // Desenha e aumenta o lado 14 avancar lado ; 15 girar_direita 90; 16 lado = lado + 5; 17 fim_repita ; 18 fim
+```js
+inicio 
+    var inteiro : lado ; 
+    var texto : cor ; 
+
+    lado = 5; 
+    cor_de_fundo " black " ; 
+    definir_espessura 2; 8 
+    repita 50 vezes 
+        // Muda a cor da linha a cada iteracao 
+        definir_cor " cyan " ; 12 
+        // Desenha e aumenta o lado 
+        avancar lado ; 
+        girar_direita 90; 
+        lado = lado + 5; 
+    fim_repita ; 
+fim
 ```
 
 Listing 8: Código para desenhar uma espiral colorida.
 
 ## Python Gerado (saida3.py)
 
-```
-1 import turtle 2 3 screen = turtle . Screen () 4 t = turtle . Turtle () 5 screen . title ( " Resultado -Exemplo 3 " ) 6 t . speed (0) # Velocidade maxima 7 8 # Declaracao de variaveis 9 lado = 0 10 cor = " " 11 12 # Atribuicoes iniciais 13 lado = 5 14 screen . bgcolor ( " black " ) 15 t . pensize (2) 16 17 # Laco de repeticao 18 for _ in range (50) : 19 t . pencolor ( " cyan " ) 20 21 # Comandos de desenho e atualizacao 22 t . forward ( lado ) 23 t . right (90) 24 lado = lado + 5 25
+```python
+import turtle
+
+screen = turtle.Screen()
+t = turtle.Turtle()
+screen.title("Resultado-Exemplo 3")
+t.speed(0) # Velocidade maxima
+# Declaracao de variaveis
+lado = 0
+cor = ""
+# Atribuicoes iniciais
+lado = 5
+screen.bgcolor("black")
+t.pensize(2)
+# Laco de repeticao
+for _ in range(50):
+t.pencolor("cyan")
+# Comandos de desenho e atualizacao
+t.forward(lado)
+t.right(90)
+lado = lado + 5
+
+turtle.done()
 ```
 
 ## 5 Análise Léxica e Sintática
@@ -241,69 +380,69 @@ Após a construção da Árvore Sintática Abstrata (AST), o analisador semânti
 
 A Tabela de Símbolos armazenará todas as variáveis declaradas, juntamente com seus tipos.
 
-- · Uso antes da declaração: Para cada variável encontrada em uma expressão ou atribuição, o analisador deve verificar se ela existe na Tabela de Símbolos. Caso contrário, um erro de "variável não declarada"deve ser reportado.
-- · Redeclaração de variável: Ao processar uma declaração, o analisador deve verificar se a variável já existe na Tabela de Símbolos. Se existir, um erro de "variável já declarada"deve ser emitido.
+- Uso antes da declaração: Para cada variável encontrada em uma expressão ou atribuição, o analisador deve verificar se ela existe na Tabela de Símbolos. Caso contrário, um erro de "variável não declarada"deve ser reportado.
+- Redeclaração de variável: Ao processar uma declaração, o analisador deve verificar se a variável já existe na Tabela de Símbolos. Se existir, um erro de "variável já declarada"deve ser emitido.
 
 ## 6.2 Verificação de Tipos (Tipagem Estática)
 
-- · Atribuição: Em um comando de atribuição como x = y;, o tipo da variável y (ou do valor literal) deve ser compatível com o tipo da variável x, conforme registrado na Tabela de Símbolos. Um erro de "tipos incompatíveis"deve ser gerado se, por exemplo, tentar-se atribuir um texto a uma variável do tipo inteiro ou real .
-- · Argumentos de Comandos: Os tipos das expressões passadas como argumentos para os comandos devem ser validados. Por exemplo, o comando avancar espera um argumento do tipo inteiro. Se uma variável do tipo texto for fornecida, um erro semântico deve ser acusado.
+- Atribuição: Em um comando de atribuição como x = y;, o tipo da variável y (ou do valor literal) deve ser compatível com o tipo da variável x, conforme registrado na Tabela de Símbolos. Um erro de "tipos incompatíveis"deve ser gerado se, por exemplo, tentar-se atribuir um texto a uma variável do tipo inteiro ou real .
+- Argumentos de Comandos: Os tipos das expressões passadas como argumentos para os comandos devem ser validados. Por exemplo, o comando avancar espera um argumento do tipo inteiro. Se uma variável do tipo texto for fornecida, um erro semântico deve ser acusado.
 
 ## 7 Componentes Obrigatórios do Projeto
 
 - 1.) Tokenizador: Implementação manual para reconhecer todos os elementos da linguagem personalizad TurtleScript .
 - 2.) Parser Recursivo Descendente LL(1) Implementação manual com construção de uma Árvore Sintática Abstrata (AST).
 - 3.) Análise Semântica: O analisador deve implementar:
-- · Verificação de declaração prévia de variáveis (escopo).
-- · Verificação de tipos (tipagem estática: inteiro/texto).
-- · Proibição de comandos com tipos de argumentos inválidos.
+- Verificação de declaração prévia de variáveis (escopo).
+- Verificação de tipos (tipagem estática: inteiro/texto).
+- Proibição de comandos com tipos de argumentos inválidos.
 - 4.) Geração de Código: Geração de código Python com a biblioteca Turtle a partir da AST, criando arquivos .py executáveis.
 - 5.) Casos de Teste: Criar e testar pelo menos 3 programas diferentes em TurtleScript .
 - 6.) Novos Comandos: Crie pelo menos dois comandos novos
 
 ## 7.1 Análise de Comandos Específicos
 
-- · Comando ir\_para: Deve receber exatamente dois argumentos, ambos do tipo inteiro .
-- · Comando definir\_cor: Deve receber um argumento do tipo texto .
-- · Comando repita: O número de repetições deve ser um literal do tipo inteiro, não uma variável.
+- Comando ir\_para: Deve receber exatamente dois argumentos, ambos do tipo inteiro .
+- Comando definir\_cor: Deve receber um argumento do tipo texto .
+- Comando repita: O número de repetições deve ser um literal do tipo inteiro, não uma variável.
 
 ## 7.2 Entregáveis
 
-- · Código-fonte modularizado: tokenizer.py , parser.py , semantico.py , gerador.py .
-- · Arquivos de teste de entrada: entrada1.txt , entrada2.txt, etc.
-- · Códigos Python gerados: saida1.py , saida2.py, etc.
-- · Relatório final em formato PDF.
-- · Slide da Apresentação
-- · (Opcional) Script de automação da execução (ex: execucao.sh).
-- · (Opcional - Nota Bônus): Substitua a implementação do parser recursivo descendente por um parser LL(1) dirigido por tabela.
+- Código-fonte modularizado: tokenizer.py , parser.py , semantico.py , gerador.py .
+- Arquivos de teste de entrada: entrada1.txt , entrada2.txt, etc.
+- Códigos Python gerados: saida1.py , saida2.py, etc.
+- Relatório final em formato PDF.
+- Slide da Apresentação
+- (Opcional) Script de automação da execução (ex: execucao.sh).
+- (Opcional - Nota Bônus): Substitua a implementação do parser recursivo descendente por um parser LL(1) dirigido por tabela.
 
 ## 7.3 Estrutura do Relatório Final
 
 O relatório deverá conter, no mínimo:
 
-- · Descrição detalhada da linguagem TurtleScript .
-- · O passo a passo da implementação
-- · A Gramática e as regras de parsing implementadas.
-- · A estratégia utilizada na análise semântica .
-- · Detalhes sobre o processo de geração de código .
-- · Casos de teste com resultados, prints dos desenhos gerados e comentários.
-- · Discussão sobre as dificuldades enfrentadas e as soluções encontradas.
+- Descrição detalhada da linguagem TurtleScript .
+- O passo a passo da implementação
+- A Gramática e as regras de parsing implementadas.
+- A estratégia utilizada na análise semântica .
+- Detalhes sobre o processo de geração de código .
+- Casos de teste com resultados, prints dos desenhos gerados e comentários.
+- Discussão sobre as dificuldades enfrentadas e as soluções encontradas.
 
 ## 7.4 Observações Finais
 
-- · Trabalhos feitos majoritariamente por IA serão anulados
-- · Plágio resultará em nota zero. Cada aluno deve ser capaz de explicar qualquer parte do projeto.
-- · Verifique se a gramática original da linguagem é LL(1), caso não seja, realize as modificações necessárias.
+- Trabalhos feitos majoritariamente por IA serão anulados
+- Plágio resultará em nota zero. Cada aluno deve ser capaz de explicar qualquer parte do projeto.
+- Verifique se a gramática original da linguagem é LL(1), caso não seja, realize as modificações necessárias.
 
 ## 8 Cronograma
 
 - O projeto possui as seguintes datas relevantes previstas:
-- · 18/06/2025 a 07/07/2025: Finalização dos Projetos
-- · 08/07/2025: Entrega do projeto final pelo Classroom
+- 18/06/2025 a 07/07/2025: Finalização dos Projetos
+- 08/07/2025: Entrega do projeto final pelo Classroom
 - – Código
 - – Relatório
 - – Apresentação
-- · 09/07/2025 e 11/07/2025: Apresentação dos trabalhos
-- · 16/07/2025: Prova Final
+- 09/07/2025 e 11/07/2025: Apresentação dos trabalhos
+- 16/07/2025: Prova Final
 
 Data de entrega final: 08/07/2025

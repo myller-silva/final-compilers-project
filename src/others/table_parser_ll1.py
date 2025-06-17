@@ -27,7 +27,9 @@ class Terminal(Symbol):
 
 
 class Production:
-    def __init__(self, lhs: NonTerminal, rhs: list):
+    def __init__(self, lhs: NonTerminal, rhs: list[Symbol]):
+        assert isinstance(lhs, NonTerminal), f"LHS must be a NonTerminal but got {type(lhs).__name__}"
+        assert all(isinstance(sym, Symbol) for sym in rhs), "RHS must be a list of Symbols"
         self.lhs = lhs
         self.rhs = rhs
 

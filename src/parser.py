@@ -58,6 +58,7 @@ class RecursiveDescentParser:
 
         self.pos = 0
         self.last_valid_token = None  # Armazena o último token válido
+        self.last_position = 0  # Armazena a última posição válida
         success, tree = self._parse_symbol(self.start_symbol, parent=None)
         if success and self.pos == len(self.tokens):
             return tree
@@ -68,6 +69,7 @@ class RecursiveDescentParser:
             raise SyntaxError(
                 f"Erro de sintaxe perto de '{current_token[1]}' na posição {self.pos}. "
                 f"Último token válido: '{self.last_valid_token[1]}'"
+                f" na posição {self.last_position}."
             )
 
     def current(self) -> str | None:
@@ -94,7 +96,8 @@ class RecursiveDescentParser:
                 self.tokens[self.pos] if self.pos < len(self.tokens) else None
             )
             if current_token and current_token[0] == symbol:
-                self.last_valid_token = current_token  # Atualiza o último token válido
+                self.last_valid_token = current_token
+                self.last_position = self.pos
                 self.pos += 1
                 node = Node(f"{symbol}: {current_token[1]}", parent=parent)
                 return True, node  # Retorna o token completo
@@ -102,6 +105,8 @@ class RecursiveDescentParser:
                 encontrado = current_token[1] if current_token else "EOF"
                 raise SyntaxError(
                     f"Erro de sintaxe: esperado '{symbol}', mas encontrado '{encontrado}' na posição {self.pos}."
+                    f" Último token válido: '{self.last_valid_token[1]}'"
+                    f" na posição {self.last_position}."
                 )
 
         for production in self.grammar[symbol]:
@@ -125,9 +130,9 @@ class RecursiveDescentParser:
 
         current_token = self.tokens[self.pos] if self.pos < len(self.tokens) else None
         raise SyntaxError(
-            f"\nErro de sintaxe: não foi possível analisar '{symbol}' na posição {self.pos}. "
-            f"\nToken atual: '{current_token[1] if current_token else 'EOF'}'. "
-            f"\nUltimo token válido: '{self.last_valid_token[1] if self.last_valid_token else 'N/A'}'."
+            f"Erro de sintaxe. "
+            f"Último token válido: '{self.last_valid_token[1]}'"
+            f" na posição {self.last_position}. "
         )
 
     @staticmethod
@@ -164,11 +169,15 @@ class RecursiveDescentParser:
             filhos_nodes = list(node.children)
             child_ast_nodes = []
             for child in filhos_nodes:
-                ast_child = RecursiveDescentParser.to_abstract_syntax_tree(child, ignored_terms, flattening_transforms, parent=None)
+                ast_child = RecursiveDescentParser.to_abstract_syntax_tree(
+                    child, ignored_terms, flattening_transforms, parent=None
+                )
                 if ast_child is not None:
                     child_ast_nodes.append(ast_child)
-            
-            if symbol_name in flattening_transforms: # Transformação customizada. A função de transformação deve criar e retornar um Node do anytree
+
+            if (
+                symbol_name in flattening_transforms
+            ):  # Transformação customizada. A função de transformação deve criar e retornar um Node do anytree
                 return flattening_transforms[symbol_name](
                     child_ast_nodes,
                     RecursiveDescentParser.to_abstract_syntax_tree,
@@ -182,12 +191,10 @@ class RecursiveDescentParser:
             for child in child_ast_nodes:
                 child.parent = ast_node
             return ast_node
-    
+
     @staticmethod
     def flatten_children_anytree(simbolo_lista):
-        def transform(
-            filhos, to_ast, ignorar, transformar, parent
-        ):
+        def transform(filhos, to_ast, ignorar, transformar, parent):
             itens = []
             for filho in filhos:
                 if filho is None:
@@ -204,7 +211,6 @@ class RecursiveDescentParser:
                 item.parent = node
             return node
         return transform
-
 
 
 # if __name__ == "__main__":
@@ -245,7 +251,6 @@ if __name__ == "__main__":
     from utils import print_grammar
     from utils import print_anytree
     from utils.text import custom_print
-    
 
     grammar = [
         ("Programa", ["Bloco"]),
@@ -254,7 +259,6 @@ if __name__ == "__main__":
         ("Comandos", ["Comando", "Comandos"]),
         ("Comandos", []),
         ("Comando", [CMD_AVANCAR, "Expressao", PONTO_VIRGULA]),
-        ("Expressao", ["Literal", "ExpressaoR"]),
         ("Expressao", ["Literal", "ExpressaoR"]),
         ("ExpressaoR", [OP_MAIS, "Literal", "ExpressaoR"]),
         ("ExpressaoR", [OP_MULTIPLICACAO, "Literal", "ExpressaoR"]),
@@ -268,7 +272,7 @@ if __name__ == "__main__":
     word = """
     inicio
         avancar 10 ;
-        avancar 11 + teste + 1;
+        avancar 11 + teste + 1 +1 ; // semanticamente errado, mas sintaticamente correto
     fim
     """
 
@@ -281,7 +285,10 @@ if __name__ == "__main__":
 
     custom_print("Árvore Sintática Abstrata (AST)", border_char="*")
     to_flatten = ["Comandos", "DeclaracaoVariavel", "Expressao", "ExpressaoR"]
-    flattening_transforms = { key : parser.flatten_children_anytree(key) for key in to_flatten }
+    flattening_transforms = {
+        key: parser.flatten_children_anytree(key) 
+        for key in to_flatten
+    }
     ast_node = parser.to_abstract_syntax_tree(
         derivation_tree,
         ignored_terms={  # Ignorar pontuação e palavras-chave

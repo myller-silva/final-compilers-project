@@ -7,16 +7,10 @@ grammar = [
     # Lista de declarações de variáveis
     ("DeclaracoesVariaveis", ["DeclaracaoVariavel", "DeclaracoesVariaveis"]),
     ("DeclaracoesVariaveis", []),  # ε
-    (
-        "DeclaracaoVariavel",
-        [KW_VAR, "Tipo", DOIS_PONTOS, "ListaIdentificadores", PONTO_VIRGULA],
-    ),
+    ("DeclaracaoVariavel", [KW_VAR, "Tipo", DOIS_PONTOS, "ListaIdentificadores", PONTO_VIRGULA]),
     # Permitindo múltiplos identificadores com atribuição opcional
     ("ListaIdentificadores", ["IdentificadorAtribuivel", "ListaIdentificadoresR"]),
-    (
-        "ListaIdentificadoresR",
-        [VIRGULA, "IdentificadorAtribuivel", "ListaIdentificadoresR"],
-    ),
+    ("ListaIdentificadoresR", [VIRGULA, "IdentificadorAtribuivel", "ListaIdentificadoresR"]),
     ("ListaIdentificadoresR", []),
     ("IdentificadorAtribuivel", [IDENTIFICADOR, "AtribuicaoOpcional"]),
     ("AtribuicaoOpcional", [OP_ATRIBUICAO, "Expressao"]),
@@ -28,8 +22,8 @@ grammar = [
     ("Comando", ["Movimento"]),
     ("Comando", ["ControleCaneta"]),
     ("Comando", ["ControleTela"]),
-    ("Comando", ["Condicional"]),
     ("Comando", ["LacoRepeticao"]),
+    ("Comando", ["Condicional"]), # Condicional # ("Comando", ["Condicional"]),
     # Atribuição
     ("Atribuicao", [IDENTIFICADOR, OP_ATRIBUICAO, "Expressao", PONTO_VIRGULA]),
     # Movimento
@@ -61,41 +55,25 @@ grammar = [
     ("Fator", [TEXTO]),  # TODO: melhorar depois
     ("Fator", [IDENTIFICADOR]),
     ("Fator", [ABRE_PARENTESES, "Expressao", FECHA_PARENTESES]),
+
     # Estrutura do SE
-    ("Condicional", [KW_SE, "ExpressaoLogica", KW_ENTAO, "Comandos", KW_FIM_SE]),
-    (
-        "Condicional",
-        [
-            KW_SE,
-            "ExpressaoLogica",
-            KW_ENTAO,
-            "Comandos",
-            KW_SENAO,
-            "Comandos",
-            KW_FIM_SE,
-        ],
-    ),
-    # Estrutura do Repita
+    ("Condicional", [KW_SE, "ExpressaoLogica", KW_ENTAO, "Comandos", "Senao", KW_FIM_SE, PONTO_VIRGULA]),
+    ("Senao", [KW_SENAO, "Comandos"]),
+    ("Senao", []),
+    # Lacos de repetição
     ("LacoRepeticao", ["LacoRepita"]),
     ("LacoRepeticao", ["LacoEnquanto"]),
-    (
-        "LacoRepita",
-        [KW_REPITA, "Expressao", KW_VEZES, "Comandos", KW_FIM_REPITA, PONTO_VIRGULA],
-    ),
-    (
-        "LacoEnquanto",
-        [
-            KW_ENQUANTO,
-            "ExpressaoLogica",
-            KW_FACA,
-            "Comandos",
-            KW_FIM_ENQUANTO,
-            PONTO_VIRGULA,
-        ],
-    ),
+    ("LacoEnquanto", [KW_ENQUANTO, "ExpressaoLogica", KW_FACA, "Comandos", KW_FIM_ENQUANTO, PONTO_VIRGULA,]),
+    ("LacoRepita", [KW_REPITA, "Expressao", KW_VEZES, "Comandos", KW_FIM_REPITA, PONTO_VIRGULA]),
     # Expressão lógica
     ("ExpressaoLogica", [ABRE_PARENTESES, "ExpressaoLogica", FECHA_PARENTESES]),
     ("ExpressaoLogica", ["Expressao", "OperadorLogico", "Expressao"]),
+    ("ExpressaoLogica", [LOGICO, "ExpressaoLogicaR"]),
+    ("ExpressaoLogicaR", ["OperadorLogico", "ExpressaoLogicaR"]),
+    ("ExpressaoLogicaR", [LOGICO]),
+    ("ExpressaoLogicaR", []),
+    # "OperadorLogico", LOGICO]),
+    
     ("OperadorLogico", [OP_IGUALDADE]),
     ("OperadorLogico", [OP_DIFERENTE]),
     ("OperadorLogico", [OP_MENOR_QUE]),

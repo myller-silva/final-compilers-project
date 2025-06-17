@@ -1,5 +1,9 @@
 class RecursiveDescentParser:
-    def __init__(self, grammar: list[tuple[str, list[str]]], start_symbol: str, debug: bool = False):
+    def __init__(
+        self,
+        grammar: list[tuple[str, list[str]]],
+        start_symbol: str,
+    ):
         """
         Inicializa o parser com uma gramática e um símbolo inicial.
 
@@ -7,7 +11,6 @@ class RecursiveDescentParser:
             grammar: Lista de regras da gramática.
             start_symbol: Símbolo inicial da gramática.
         """
-        self.debug = debug
         self.grammar = self._organize_grammar(grammar)
         self.start_symbol = start_symbol
         self.tokens: list[str] = []
@@ -45,10 +48,7 @@ class RecursiveDescentParser:
         Raises:
             SyntaxError: Se houver erro de sintaxe.
         """
-        try:  # Verifica se os tokens são válidos antes de processá-los
-            self.tokens = tokens
-        except IndexError:
-            raise ValueError("Os tokens fornecidos não estão no formato esperado (tuplas com dois elementos).")
+        self.tokens = tokens
 
         self.pos = 0
         self.last_valid_token = None  # Armazena o último token válido
@@ -56,12 +56,12 @@ class RecursiveDescentParser:
         if success and self.pos == len(self.tokens):
             return tree
         else:
-            current_token = self.tokens[self.pos] if self.pos < len(self.tokens) else None
+            current_token = (
+                self.tokens[self.pos] if self.pos < len(self.tokens) else None
+            )
             raise SyntaxError(
                 f"Erro de sintaxe perto de '{current_token[1]}' na posição {self.pos}. "
                 f"Último token válido: '{self.last_valid_token[1]}'"
-                f"Tokens restantes: {self.tokens[self.pos:]}. "
-                f"Esperado: {self.start_symbol}."
             )
 
     def current(self) -> str | None:
@@ -83,17 +83,18 @@ class RecursiveDescentParser:
         Raises:
             SyntaxError: Se houver erro de sintaxe.
         """
-        if self.debug:
-            print(f"{symbol} *** {self.current()}  ***  {symbol == self.current()} *** {self.pos}")
         if symbol not in self.grammar:  # terminal
-            current_token = self.tokens[self.pos] if self.pos < len(self.tokens) else None
+            current_token = (
+                self.tokens[self.pos] if self.pos < len(self.tokens) else None
+            )
             if current_token and current_token[0] == symbol:
                 self.last_valid_token = current_token  # Atualiza o último token válido
                 self.pos += 1
-                return True, symbol
+                return True, current_token  # Retorna o token completo
             else:
+                encontrado = current_token[1] if current_token else "EOF"
                 raise SyntaxError(
-                    f"Erro de sintaxe: esperado '{symbol}', mas encontrado '{current_token[1]}' na posição {self.pos}."
+                    f"Erro de sintaxe: esperado '{symbol}', mas encontrado '{encontrado}' na posição {self.pos}."
                 )
 
         for production in self.grammar[symbol]:
@@ -122,6 +123,67 @@ class RecursiveDescentParser:
         )
 
 
+def transformar_lista_aplanada(simbolo_lista):
+    def transform(filhos, derivacao_para_ast, ignorar, transformar):
+        itens = []
+        for filho in filhos:
+            ast = derivacao_para_ast(filho, ignorar, transformar)
+            if ast is None:
+                continue
+            # Se o filho também é o mesmo símbolo, aplainar
+            if isinstance(ast, tuple) and ast[0] == simbolo_lista:
+                itens.extend(ast[1])
+            else:
+                itens.append(ast)
+        return (simbolo_lista, itens)
+
+    return transform
+
+def derivacao_para_ast(node, ignorar=None, transformar=None):
+    """
+    Converte uma árvore de derivação em uma árvore sintática abstrata (AST).
+    - node: nó da árvore de derivação (tupla ou token)
+    - ignorar: conjunto de símbolos/terminais a serem ignorados (ex: pontuação, palavras-chave)
+    - transformar: dict opcional {simbolo: função(children) -> nó_ast}
+    """
+    if ignorar is None:
+        ignorar = set()
+    if transformar is None:
+        transformar = dict()
+
+    # Nó terminal (token): ('TIPO', 'valor')
+    if isinstance(node, tuple) and len(node) == 2 and isinstance(node[1], str):
+        tipo, valor = node
+        if tipo in ignorar:
+            return None
+        # return node  # Ou só valor, se preferir
+        return valor
+
+    # Nó não-terminal: ('Simbolo', [filhos])
+    if isinstance(node, tuple) and len(node) == 2 and isinstance(node[1], list):
+        simbolo, filhos = node
+        # Se houver função de transformação para este símbolo, use-a
+        if simbolo in transformar:
+            return transformar[simbolo](
+                filhos, derivacao_para_ast, ignorar, transformar
+            )
+        # Caso padrão: processa filhos recursivamente, removendo os ignorados
+        filhos_ast = []
+        for filho in filhos:
+            ast = derivacao_para_ast(filho, ignorar, transformar)
+            if ast is not None:
+                filhos_ast.append(ast)
+        # Se só tem um filho, pode "colapsar" o nó
+        if len(filhos_ast) == 1:
+            return filhos_ast[0]
+        # Se não tem filhos, retorna None
+        if not filhos_ast:
+            return None
+        return (simbolo, filhos_ast)
+    # Caso não reconhecido
+    return node
+
+
 # if __name__ == "__main__":
 #     from utils import print_grammar, print_tree_nice
 #     # Gramática de exemplo (Lista de Parênteses)
@@ -136,7 +198,7 @@ class RecursiveDescentParser:
 #     print_grammar(grammar)
 
 #     # Tokens de entrada
-#     tokens = [ # chave / valor
+#     tokens = [ # Simulando entrada tokenizada
 #         ("(", "("),
 #         (")", ")"),
 #         ("(", "("),
@@ -158,7 +220,7 @@ if __name__ == "__main__":
     from constants import *
     from tokenizer import Tokenizer
     from utils import print_grammar, print_tree_nice
-    
+
     # Exemplo simples
     grammar = [
         ("Programa", ["Bloco"]),
@@ -166,20 +228,45 @@ if __name__ == "__main__":
         ("Bloco", []),
         ("Comandos", ["Comando", "Comandos"]),
         ("Comandos", []),
-        ("Comando", [CMD_AVANCAR, INTEIRO, PONTO_VIRGULA]),
-        ("Expressao", [INTEIRO]),
+        ("Comando", [CMD_AVANCAR, "Expressao", PONTO_VIRGULA]),
+        ("Expressao", ["Literal", "ExpressaoR"]),
+        ("Expressao", ["Literal", "ExpressaoR"]),
+        ("ExpressaoR", [OP_MAIS, "Literal", "ExpressaoR"]),
+        ("ExpressaoR", [OP_MULTIPLICACAO, "Literal", "ExpressaoR"]),
+        ("ExpressaoR", []),
+        ("Literal", [INTEIRO]),
+        ("Literal", [IDENTIFICADOR]),
     ]
     print("-- Gramática --")
     print_grammar(grammar)
 
     word = """
     inicio
-    avancar 10;
+        avancar 10 ;
+        avancar 11 + teste + 1;
     fim
     """
 
     tokens = Tokenizer(word).tokenize()
     parser = RecursiveDescentParser(grammar, "Programa")
-    abstract_syntax_tree = parser.parse(tokens)
-    print("-- Árvore Sintática Abstrata --")
-    print_tree_nice(abstract_syntax_tree)
+    concret_tree = parser.parse(tokens)
+    print("-- Árvore de Derivação --")
+    print_tree_nice(concret_tree)
+
+    print("\n-- Árvore Sintática Abstrata (AST) --")
+    transformar = {
+        "Comandos": transformar_lista_aplanada("Comandos"),
+        "DeclaracoesVariaveis": transformar_lista_aplanada("DeclaracoesVariaveis"),
+        "Expressao": transformar_lista_aplanada("Expressao"),
+        # "ExpressaoR": transformar_lista_aplanada("ExpressaoR"),
+    }
+    ast = derivacao_para_ast(
+        concret_tree,
+        ignorar={  # Ignorar pontuação e palavras-chave
+            PONTO_VIRGULA,
+            KW_INICIO_BLOCO,
+            KW_FIM_BLOCO,
+        },
+        transformar=transformar,
+    )
+    print_tree_nice(ast)

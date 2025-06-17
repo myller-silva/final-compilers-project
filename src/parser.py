@@ -244,6 +244,8 @@ if __name__ == "__main__":
     from tokenizer import Tokenizer
     from utils import print_grammar
     from utils import print_anytree
+    from utils.text import custom_print
+    
 
     grammar = [
         ("Programa", ["Bloco"]),
@@ -260,7 +262,7 @@ if __name__ == "__main__":
         ("Literal", [INTEIRO]),
         ("Literal", [IDENTIFICADOR]),
     ]
-    print("-- Gramática --")
+    custom_print(" Gramática ", border_char="*")
     print_grammar(grammar)
 
     word = """
@@ -274,18 +276,12 @@ if __name__ == "__main__":
     parser = RecursiveDescentParser(grammar, "Programa")
     derivation_tree = parser.parse(tokens)
 
-    print("\n-- Árvore de Derivação --")
+    custom_print("Árvore de Derivação", border_char="*")
     print_anytree(derivation_tree)
 
-    print("\n-- Árvore Sintática Abstrata (AST) --")
-    flattening_transforms_map = {
-        "Comandos": parser.flatten_children_anytree("Comandos"),
-        "DeclaracoesVariaveis": parser.flatten_children_anytree(
-            "DeclaracoesVariaveis"
-        ),
-        "Expressao": parser.flatten_children_anytree("Expressao"),
-        "ExpressaoR": parser.flatten_children_anytree("ExpressaoR"),
-    }
+    custom_print("Árvore Sintática Abstrata (AST)", border_char="*")
+    to_flatten = ["Comandos", "DeclaracaoVariavel", "Expressao", "ExpressaoR"]
+    flattening_transforms = { key : parser.flatten_children_anytree(key) for key in to_flatten }
     ast_node = parser.to_abstract_syntax_tree(
         derivation_tree,
         ignored_terms={  # Ignorar pontuação e palavras-chave
@@ -293,7 +289,7 @@ if __name__ == "__main__":
             KW_INICIO_BLOCO,
             KW_FIM_BLOCO,
         },
-        flattening_transforms=flattening_transforms_map,
+        flattening_transforms=flattening_transforms,
         parent=None,
     )
     print_anytree(ast_node)

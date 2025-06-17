@@ -12,7 +12,6 @@ from constants import PONTO_VIRGULA, KW_INICIO_BLOCO, KW_FIM_BLOCO
 custom_print(" Gramatica ", border_char="*")
 print_grammar(grammar)
 
-
 # LEXICAL ANALYSIS
 input_text = """
 inicio
@@ -36,6 +35,7 @@ inicio
     girar_direita 144;
 fim
 """
+
 tokens = Tokenizer(input_text).tokenize()
 custom_print(" Tokens ", border_char="*")
 for token in tokens:
@@ -50,6 +50,7 @@ print_anytree(derivation_tree)
 
 custom_print(" Abstract Syntax Tree ", border_char="*")
 to_flatten = ["Comandos", "DeclaracaoVariavel", "Expressao", "ExpressaoR"]
+# to_flatten = []
 flattening_transforms = { key : parser.flatten_children_anytree(key) for key in to_flatten }
 abstract_syntax_tree = parser.to_abstract_syntax_tree(
     derivation_tree,

@@ -7,7 +7,6 @@ class RecursiveDescentParser:
         self,
         grammar: list[tuple[str, list[str]]],
         start_symbol: str,
-        debug: bool = False,
     ):
         """
         Inicializa o parser com uma gramática e um símbolo inicial.
@@ -20,7 +19,6 @@ class RecursiveDescentParser:
         self.start_symbol = start_symbol
         self.tokens: list[str] = []
         self.pos: int = 0
-        self.debug = debug
 
     def _organize_grammar(
         self, rules: list[tuple[str, list[str]]]
@@ -284,7 +282,8 @@ if __name__ == "__main__":
     print_anytree(derivation_tree)
 
     custom_print("Árvore Sintática Abstrata (AST)", border_char="*")
-    to_flatten = ["Comandos", "DeclaracaoVariavel", "Expressao", "ExpressaoR"]
+    # to_flatten = ["Comandos", "DeclaracaoVariavel", "Expressao", "ExpressaoR"]
+    to_flatten = []
     flattening_transforms = {
         key: parser.flatten_children_anytree(key) 
         for key in to_flatten

@@ -1,4 +1,4 @@
-def custom_print(text, color_code=32, width=50, border_char="-"):
+def custom_print(text, color_code=32, width=50, border_char="-", end="\n"):
     """
     Prints the text with a specified color and formats it within a border.
     
@@ -9,7 +9,7 @@ def custom_print(text, color_code=32, width=50, border_char="-"):
     """
     formatted_text = format_text(text, width, border_char)
     colored_text = print_colored(formatted_text, color_code)
-    print(colored_text)
+    print(colored_text, end=end)
 
 def print_colored(text, color_code):
     return f"\033[{color_code}m{text}\033[0m"

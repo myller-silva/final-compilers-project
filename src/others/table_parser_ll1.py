@@ -5,13 +5,13 @@ init(autoreset=True)
 
 
 class Symbol:
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
 
     def __repr__(self):
         return self.name
 
-    def __eq__(self, other):
+    def __eq__(self, other):    
         return isinstance(other, type(self)) and self.name == other.name
 
     def __hash__(self):
@@ -187,8 +187,10 @@ class Tokenizer():
     def tokenize(text, grammar: Grammar):
         tokens = []
         # Ignorar espaços e comentários
-        space_pattern, comment_pattern = r"[\s]+", r"//.*?$"
-        text = re.sub(space_pattern, "", text)  # Substitui múltiplos espaços por vazio
+        space_pattern  = r"[\s]+"
+        text = re.sub(space_pattern, " ", text)  # Substitui múltiplos espaços por um unico
+        # Ignorar comentários
+        comment_pattern =  r"//.*?$"
         text = re.sub(comment_pattern, "", text, flags=re.MULTILINE)  #
         
         # Construir o regex de tokenização
@@ -197,14 +199,20 @@ class Tokenizer():
         match_token = re.compile(token_regex).match
         # Tokenização:
         position = 0
+        line_number = 1
         while position < len(text):
             match = match_token(text, position)
             if match is None:
                 snippet = text[position:position + 10]
-                raise RuntimeError(f"Erro de tokenização na posição {position} trecho: '{snippet}'")
+                raise RuntimeError(f"Erro de tokenização na linha {line_number}, posição {position}, trecho: '{snippet}'")
             position = match.end()
             token_type = match.lastgroup
             lexeme = match.group(token_type)
+            if lexeme == " ": # Ignora espaços em branco
+                continue
+            if lexeme == "\n":
+                line_number += 1
+                continue 
             
             tokens.append(
                 Token(
@@ -222,12 +230,14 @@ class Tokenizer():
                 return terminal
         raise ValueError(f"Terminal '{token_type}' não encontrado na gramática.")
 
-class LL1Table:
+class LL1Table: # TODO: LANCAR ERRO QUANDO TIVER UMA NOVA PRODUÇÃO PARA UMA CELULA JÁ PREENCHIDA
     def __init__(self, grammar: Grammar):
         self.grammar = grammar
         self.table = self.build_ll1_table()
 
     def build_ll1_table(self):
+        # TODO: LANCAR ERRO QUANDO TIVER UMA NOVA PRODUÇÃO PARA UMA CELULA JÁ PREENCHIDA
+        """Constrói a tabela LL(1) para a gramática fornecida."""
         table = {}
         for prod in self.grammar.productions:
             lhs, rhs = prod.lhs, prod.rhs
@@ -266,6 +276,8 @@ class LL1ParserTable:
         self.start_symbol = start_symbol
 
     def parse(self, tokens: list[Token]):
+        """Realiza o parsing LL(1) para a lista de tokens fornecida."""
+        #TODO: CRIAR ARVORE SINTATICA ABSTRATA (AST)
         token_EOF = Token(Grammar.EOF, "$")
         if not tokens or tokens[-1].terminal != Grammar.EOF:
             tokens.append(token_EOF)  # Adiciona o token EOF

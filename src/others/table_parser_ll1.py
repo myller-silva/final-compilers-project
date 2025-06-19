@@ -1,3 +1,4 @@
+import re
 from collections import defaultdict
 from colorama import Fore, Style, init
 
@@ -11,7 +12,7 @@ class Symbol:
     def __repr__(self):
         return self.name
 
-    def __eq__(self, other):    
+    def __eq__(self, other):
         return isinstance(other, type(self)) and self.name == other.name
 
     def __hash__(self):
@@ -25,10 +26,8 @@ class NonTerminal(Symbol):
 class Terminal(Symbol):
     def __init__(self, name: str, regex: str = None):
         super().__init__(name)
-        self.regex = (
-            regex if regex is not None 
-            else f"{name}"
-        )  # Por padrão, o regex é o próprio nome
+        # Por padrão, o regex é o próprio nome
+        self.regex = regex if regex is not None else f"{name}"
 
 
 class Production:
@@ -46,10 +45,18 @@ class Production:
         rhs_str = " ".join(map(str, self.rhs)) if self.rhs else str(Grammar.EPSILON)
         return f"{self.lhs} {arrow} {rhs_str}"
 
+    def __eq__(self, other):
+        if isinstance(other, Production):
+            return self.lhs == other.lhs and self.rhs == other.rhs
+        return False
+
+    def __hash__(self):
+        return hash((self.lhs, tuple(self.rhs)))
+
 
 class Grammar:
     EPSILON = Symbol("ε")
-    EOF = Terminal("EOF", "$") # EOF = Terminal("$")
+    EOF = Terminal("EOF", "$")
 
     def __init__(
         self,
@@ -62,11 +69,11 @@ class Grammar:
         self.terminals = terminals
         self.non_terminals = non_terminals
         self.productions = productions
-        
+
         self._validate_productions()
         self.first_sets = self.compute_first_sets()
         self.follow_sets = self.compute_follow_sets()
-    
+
     def _validate_productions(self):
         erros = []
         for prod in self.productions:
@@ -81,7 +88,7 @@ class Grammar:
                     erros.append(f"NonTerminal '{sym}' is not in non_terminals list")
         if erros:
             raise ValueError("Errors in productions:\n" + "\n".join(erros))
-    
+
     def __repr__(self):
         productions_str = "\n".join(map(str, self.productions))
         return f"Grammar:\nStart Symbol: {self.start_symbol}\nProductions:\n{productions_str}"
@@ -163,74 +170,78 @@ class Token:
     def __init__(self, terminal: Terminal, lexeme: str):
         self.terminal = terminal
         self.lexeme = lexeme
-    
+
     def __repr__(self):
         return f"Token({self.terminal.name}, '{self.lexeme}')"
-    
+
     def __str__(self):
         return f"{self.terminal.name}: '{self.lexeme}'"
-    
+
     def __eq__(self, other):
         if isinstance(other, Token):
             return self.terminal == other.terminal and self.lexeme == other.lexeme
         return False
-    
+
     def __hash__(self):
         return hash((self.terminal, self.lexeme))
 
-import re
-class Tokenizer():
+
+
+
+class Tokenizer:
     def __init__(self):
         pass
 
     @staticmethod
     def tokenize(text: str, grammar: Grammar) -> list[Token]:
         tokens = []
-        # Ignorar espaços e comentários
-        space_pattern  = r"[\s]+"
-        text = re.sub(space_pattern, " ", text)  # Substitui múltiplos espaços por um unico
         # Ignorar comentários
-        comment_pattern =  r"//.*?$"
-        text = re.sub(comment_pattern, "", text, flags=re.MULTILINE)  #
-        
+        comment_pattern = r"//.*?$"
+        text = re.sub(comment_pattern, "", text, flags=re.MULTILINE)
+
         # Construir o regex de tokenização
-        token_patterns = [(token.name, token.regex) for token in grammar.terminals if isinstance(token, Terminal)]
+        token_patterns = [
+            (token.name, token.regex)
+            for token in grammar.terminals
+            if isinstance(token, Terminal)
+        ]
         token_regex = "|".join(f"(?P<{pair[0]}>{pair[1]})" for pair in token_patterns)
         match_token = re.compile(token_regex).match
         # Tokenização:
         position = 0
         line_number = 1
+        terminals = Tokenizer._get_terminals(grammar)
         while position < len(text):
+            # Pular espaços em branco
+            ws_match = re.match(r"\s+", text[position:])
+            if ws_match:
+                ws = ws_match.group(0)
+                line_number += ws.count("\n")
+                position += len(ws)
+                continue
             match = match_token(text, position)
             if match is None:
-                snippet = text[position:position + 10]
-                raise RuntimeError(f"Erro de tokenização na linha {line_number}, posição {position}, trecho: '{snippet}'")
+                snippet = text[position : position + 10]
+                raise RuntimeError(
+                    f"Erro de tokenização na linha {line_number}, posição {position}, trecho: '{snippet}'"
+                )
             position = match.end()
             token_type = match.lastgroup
             lexeme = match.group(token_type)
-            if lexeme == " ": # Ignora espaços em branco
-                continue
-            if lexeme == "\n":
-                line_number += 1
-                continue 
-            
-            tokens.append(
-                Token(
-                    Tokenizer._get_terminal(grammar, token_type),
-                    lexeme=lexeme))
-        return  tokens
-    
-    # TODO: Melhorar a busca de terminais
-    # Para evitar a busca linear, podemos usar um dicionário para mapear os nomes dos terminais.
-    # TODO: talvez transferir esse método para a classe Grammar, ou criar uma classe diferente.
-    @staticmethod
-    def _get_terminal(grammar: Grammar, token_type: str) -> Terminal:
-        for terminal in grammar.terminals:
-            if terminal.name == token_type:
-                return terminal
-        raise ValueError(f"Terminal '{token_type}' não encontrado na gramática.")
+            tokens.append(Token(terminals.get(token_type), lexeme=lexeme))
+        return tokens
 
-class LL1Table: # TODO: LANCAR ERRO QUANDO TIVER UMA NOVA PRODUÇÃO PARA UMA CELULA JÁ PREENCHIDA
+    @staticmethod  # TODO: talvez transferir esse método para a classe Grammar, ou criar uma classe diferente.
+    def _get_terminals(grammar: Grammar) -> dict[str, Terminal]:
+        """Retorna um dicionário de terminais da gramática."""
+        return {
+            terminal.name: terminal
+            for terminal in grammar.terminals
+            if isinstance(terminal, Terminal)
+        }
+
+
+class LL1Table:  # TODO: LANCAR ERRO QUANDO TIVER UMA NOVA PRODUÇÃO PARA UMA CELULA JÁ PREENCHIDA
     def __init__(self, grammar: Grammar):
         self.grammar = grammar
         self.table = self.build_ll1_table()
@@ -277,47 +288,51 @@ class LL1ParserTable:
 
     def parse(self, tokens: list[Token]):
         """Realiza o parsing LL(1) para a lista de tokens fornecida."""
-        #TODO: CRIAR ARVORE SINTATICA ABSTRATA (AST)
+        # TODO: CRIAR ARVORE SINTATICA ABSTRATA (AST)
         token_EOF = Token(Grammar.EOF, "$")
         if not tokens or tokens[-1].terminal != Grammar.EOF:
             tokens.append(token_EOF)  # Adiciona o token EOF
-        
+
         stack = [Grammar.EOF, self.start_symbol]
         input_tokens = tokens[:]
         cursor = 0
-        print(f"\nIniciando parsing LL(1) para entrada: {tokens}")
+        # print(f"\nIniciando parsing LL(1) para entrada: {tokens}")
         while stack:
             top = stack.pop()
-            current_token = input_tokens[cursor] if cursor < len(input_tokens) else token_EOF
+            current_token = (
+                input_tokens[cursor] if cursor < len(input_tokens) else token_EOF
+            )
             current_token, lexeme = (current_token.terminal, current_token.lexeme)
-            print(f"Pilha: {[str(s) for s in stack[::-1]]} | Próximo token: {current_token}")
-            
+            # print(
+            # f"Pilha: {[str(s) for s in stack[::-1]]} | Próximo token: {current_token}"
+            # )
+
             if isinstance(top, Terminal) or top == Grammar.EOF:
                 if top == current_token:
-                    print(f"Consome token: {current_token}")
+                    # print(f"Consome token: {current_token}")
                     cursor += 1
                 else:
-                    print(f"Erro: esperado {top}, encontrado {current_token}")
+                    # print(f"Erro: esperado {top}, encontrado {current_token}")
                     return False
             elif isinstance(top, NonTerminal):
                 prod = self.table.get((top, current_token))
                 if prod:
-                    print(f"Aplica produção: {prod}")
+                    # print(f"Aplica produção: {prod}")
                     rhs = prod.rhs
                     if not (len(rhs) == 1 and rhs[0] == Grammar.EPSILON):
                         for symbol in reversed(rhs):
                             stack.append(symbol)
                 else:
-                    print(f"Erro: nenhuma produção para ({top}, {current_token})")
+                    # print(f"Erro: nenhuma produção para ({top}, {current_token})")
                     return False
             else:
-                print(f"Erro: símbolo desconhecido na pilha: {top}")
+                # print(f"Erro: símbolo desconhecido na pilha: {top}")
                 return False
         if cursor == len(input_tokens):
-            print("Parsing bem-sucedido!")
+            # print("Parsing bem-sucedido!")
             return True
         else:
-            print("Erro: tokens restantes após esvaziar a pilha.")
+            # print("Erro: tokens restantes após esvaziar a pilha.")
             return False
 
 
@@ -363,9 +378,7 @@ if __name__ == "__main__":
     print("\nTabela LL(1):")
     ll1_table.print_table()
 
-    # tokens = [a, b, Grammar.EOF]
     tokens = Tokenizer.tokenize("acdb", grammar)
-    # tokens.append(Token(Grammar.EOF, "EOF"))  # Adiciona o token EOF
     parser = LL1ParserTable(ll1_table, S)
     print("\nTestando parsing LL(1):")
     parser.parse(tokens)

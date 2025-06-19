@@ -184,7 +184,7 @@ class Tokenizer():
         pass
 
     @staticmethod
-    def tokenize(text, grammar: Grammar):
+    def tokenize(text: str, grammar: Grammar) -> list[Token]:
         tokens = []
         # Ignorar espaços e comentários
         space_pattern  = r"[\s]+"

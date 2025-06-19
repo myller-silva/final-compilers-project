@@ -17,3 +17,17 @@ def print_colored(text, color_code):
 def format_text(text, width=50, border_char="-"):
     border_len = (width - len(text)) // 2
     return f"{border_char * border_len}{text}{border_char * (width - len(text) - border_len)}"
+
+
+def colorize_text(text: str, color: str = "reset") -> str:
+    colors = {
+        "red": "\033[31m",
+        "green": "\033[32m",
+        "yellow": "\033[33m",
+        "blue": "\033[34m",
+        "magenta": "\033[35m",
+        "cyan": "\033[36m",
+        "reset": "\033[0m"
+    }
+    color_code = colors.get(color.lower(), colors["reset"])
+    return f"{color_code}{text}{colors['reset']}"

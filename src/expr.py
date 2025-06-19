@@ -139,7 +139,6 @@ productions = [
     Literal >> [inteiro],
 ]
 
-# print(productions)
 print("Productions:")
 for prod in productions:
     print(prod)
@@ -157,7 +156,9 @@ grammar = Grammar(
 ll1_table = LL1Table(grammar=grammar)
 
 parser = LL1ParserTable(table=ll1_table, start_symbol=grammar.start_symbol)
-text = "  1 || 1"
+text = """
+(a + b) * (c - d) || !e && f * g / h + i - j
+"""
 
 print('--' * 20)
 print(f"Input text: {text}")

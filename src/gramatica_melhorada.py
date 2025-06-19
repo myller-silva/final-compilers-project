@@ -227,7 +227,6 @@ non_terminals = [
 ]
 
 # PRODUÇÕES DA GRAMATICA
-from others.table_parser_ll1 import Production
 
 productions = [
     # --- Programa ---

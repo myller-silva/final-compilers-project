@@ -21,7 +21,10 @@ class Symbol:
 
 class NonTerminal(Symbol):
     def __rshift__(self, rhs):
-        # Permite A >> [B, c] ou A >> B
+        """
+        Define a produção A >> [B, c] ou A >> B.
+        Permite que o lado direito seja um símbolo ou uma lista de símbolos.
+        """
         if isinstance(rhs, list):
             return Production(self, rhs)
         elif isinstance(rhs, Symbol):
@@ -44,7 +47,7 @@ class Production:
         ), f"Lado esquerdo 'lhs' deve ser um '{NonTerminal.__name__}' mas recebeu '{type(lhs).__name__}'."
         assert all(
             isinstance(sym, Symbol) for sym in rhs
-        ), f"Direita 'rhs' deve ser uma lista de '{Symbol.__name__}'."
+        ), f"Lado direito 'rhs' deve ser uma lista de '{Symbol.__name__}'."
         self.lhs, self.rhs = lhs, rhs
 
     def __repr__(self):

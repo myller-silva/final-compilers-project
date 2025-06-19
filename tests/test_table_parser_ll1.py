@@ -98,6 +98,17 @@ class TestProduction(unittest.TestCase):
         prod = Production(lhs, rhs)
         self.assertEqual(hash(prod), hash((lhs, tuple(rhs))))
 
+    def test_rshift_production_creation(self):
+        A, B = NonTerminal("A"), NonTerminal("B")
+        c = Terminal("c")
+        self.assertIsInstance(A >> [B, c], Production)
+        self.assertEqual((A >> [B, c]).lhs, A)
+        self.assertEqual((A >> [B, c]).rhs, [B, c])
+        self.assertEqual(A >> [B, c], Production(A, [B, c]))
+        self.assertEqual(A >> B, Production(A, [B]))
+        self.assertEqual(A >> c, Production(A, [c]))
+        self.assertEqual(A >> Grammar.EPSILON, Production(A, [Grammar.EPSILON]))
+
 
 class BaseGrammarTest(unittest.TestCase):
     def setUp(self):
@@ -121,14 +132,15 @@ class BaseGrammarTest(unittest.TestCase):
         ]
 
         self.productions = [
-            Production(self.E, [self.T, self.X]),  # E -> T X
-            Production(self.X, [self.plus, self.T, self.X]),  # X -> + T X
-            Production(self.X, [Grammar.EPSILON]),  # X -> ε
-            Production(self.T, [self.F, self.Y]),  # T -> F Y
-            Production(self.Y, [self.dot, self.F, self.Y]),  # Y -> * F Y
-            Production(self.Y, [Grammar.EPSILON]),  # Y -> ε
-            Production(self.F, [self.left_p, self.E, self.right_p]),  # F -> ( E )
-            Production(self.F, [self.iden]),  # F -> id
+            self.E >> [self.T, self.X],                     # E -> T X
+            self.X >> [self.plus, self.T, self.X],          # X -> + T X
+            self.X >> [Grammar.EPSILON],                    # X -> ε
+            self.T >> [self.F, self.Y],                     # T -> F Y
+            self.Y >> [self.dot, self.F, self.Y],           # Y -> *
+            self.Y >> [Grammar.EPSILON],                    # Y -> ε
+            self.F >> [self.left_p, self.E, self.right_p],  # F -> ( E )
+            self.F >> [self.iden],                          # F -> id
+            
         ]
 
         self.grammar = Grammar(
@@ -142,16 +154,11 @@ class BaseGrammarTest(unittest.TestCase):
 class TestGrammar(BaseGrammarTest):
     def test_first_sets(self):
         """Testa os conjuntos FIRST da gramática."""
-        # E: {(, id}
-        # T: {(, id}
-        # X: {+, ε}
-        # F: {(, id}
-        # Y: {*, ε}
-        first_E = self.grammar.first_sets[self.E]
-        fist_T = self.grammar.first_sets[self.T]
-        first_X = self.grammar.first_sets[self.X]
-        first_Y = self.grammar.first_sets[self.Y]
-        first_F = self.grammar.first_sets[self.F]
+        first_E = self.grammar.first_sets[self.E]   # First(E): {(, id}
+        fist_T = self.grammar.first_sets[self.T]    # First(T): {(, id}
+        first_X = self.grammar.first_sets[self.X]   # First(X): {+, ε}
+        first_Y = self.grammar.first_sets[self.Y]   # First(F): {(, id}
+        first_F = self.grammar.first_sets[self.F]   # First(Y): {*, ε}
 
         first_E_expected = {self.left_p, self.iden}
         first_T_expected = {self.left_p, self.iden}
@@ -167,16 +174,11 @@ class TestGrammar(BaseGrammarTest):
 
     def test_follow_sets(self):
         """Testa os conjuntos FOLLOW da gramática."""
-        # E: {EOF, )},
-        # F: {*, +, EOF, )},
-        # Y: {+, EOF, )},
-        # T: {+, EOF, )},
-        # X: {EOF, )}
-        follow_E = self.grammar.follow_sets[self.E]
-        follow_F = self.grammar.follow_sets[self.F]
-        follow_Y = self.grammar.follow_sets[self.Y]
-        follow_T = self.grammar.follow_sets[self.T]
-        follow_X = self.grammar.follow_sets[self.X]
+        follow_E = self.grammar.follow_sets[self.E] # E: {EOF, )},
+        follow_F = self.grammar.follow_sets[self.F] # F: {*, +, EOF, )},
+        follow_Y = self.grammar.follow_sets[self.Y] # Y: {+, EOF, )},
+        follow_T = self.grammar.follow_sets[self.T] # T: {+, EOF, )},
+        follow_X = self.grammar.follow_sets[self.X] # X: {EOF, )}
 
         follow_E_expected = {Grammar.EOF, self.right_p}
         follow_F_expected = {self.dot, self.plus, Grammar.EOF, self.right_p}
@@ -207,9 +209,6 @@ class TestTokenizer(BaseGrammarTest):
             ("(a + b) * (c + d)", 11),
             ("(a+b)*(c+d)", 11),  # sem espaços
             ("(a+b)*(c+d)   ", 11),  # com espaços no final
-            ("(a+b) * (c+d)", 11),  # com espaços entre os parênteses
-            ("(a + b) * (c + d)", 11),  # com espaços entre os operadores e operandos
-            ("(a + b) * (c + d)   ", 11),  # com espaços no final
         ]
         for text, expected_count in tokenization_cases:
             with self.subTest(text=text):

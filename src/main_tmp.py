@@ -13,7 +13,6 @@ abre = Terminal("abre", r"\(")
 fecha = Terminal("fecha", r"\)")
 id = Terminal("id", r"[a-zA-Z_][a-zA-Z0-9_]*")
 terminals = [mais, mult, abre, fecha, id, Grammar.EOF]
-
 # Definindo as produções da gramática
 productions = [
     Production(E, [T, X]),  # E -> T X

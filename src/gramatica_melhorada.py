@@ -3,8 +3,7 @@ from others.table_parser_ll1 import Production, Terminal
 
 # TODO: verificar se precisar usar os boundares (\b dos regex para evitar conflitos, ou se nao precisa)
 # talvez precise pq to removendo os espaços em branco antes de tokenizar, mas nao sei se isso interfere no regex
-comentario = Terminal("comentario", r"//.*")
-espaco = Terminal("espaco", r"[ \t]+")
+# comentario = Terminal("comentario", r"//.*")
 
 kw_var = Terminal("kw_var", r"\bvar\b")
 
@@ -77,8 +76,6 @@ op_atribuicao = Terminal("op_atribuicao", r"=")
 quebra_linha = Terminal("quebra_linha", r"\n")
 
 terminals = [
-    comentario,
-    espaco,
     kw_var,
     kw_inteiro,
     kw_real,
@@ -96,7 +93,6 @@ terminals = [
     kw_fim_repita,
     kw_inicio_bloco,
     kw_fim_bloco,
-    # TODO: com ou sem parenteses?
     cmd_avancar,
     cmd_recuar,
     cmd_girar_direita,
@@ -123,7 +119,6 @@ terminals = [
     op_menor_que,
     op_maior_que,
     op_modulo,
-    # OPERADORES LOGICOS
     op_e,
     op_ou,
     op_nao,
@@ -144,7 +139,7 @@ from others.table_parser_ll1 import NonTerminal
 
 Programa = NonTerminal("Programa")
 Bloco = NonTerminal("Bloco")
-Declaracoes = NonTerminal("Declaracoes")  # Declaracoes de Variaveis
+Declaracoes = NonTerminal("Declaracoes")
 DeclaracaoVariavel = NonTerminal("DeclaracaoVariavel")
 Identificadores = NonTerminal("Identificadores")
 IdentificadoresR = NonTerminal("IdentificadoresR")
@@ -167,24 +162,14 @@ Expr = NonTerminal("Expr")
 # T -> F T'
 # T' -> * F T' | / F T' | ε
 # F -> NUM | ( E )
-(
-    ExprAritmetica, 
-    Term, 
-    Factor, 
-    ExprAritmeticaR, 
-    TermR, 
-    Num
-) = [
-    NonTerminal(name)
-    for name in [
-        "ExprAritmetica", 
-        "Term", 
-        "Factor", 
-        "ExprAritmeticaR", 
-        "TermR", 
-        "Num"
-    ]
-]
+
+ExprAritmetica = NonTerminal("ExprAritmetica")
+Term = NonTerminal("Term")
+Factor = NonTerminal("Factor")
+ExprAritmeticaR = NonTerminal("ExprAritmeticaR")
+TermR = NonTerminal("TermR")
+Num = NonTerminal("Num")
+
 # GRAMATICA DE EXPRESSAO LOGICA:
 # E  -> T E'
 # E' -> OR T E' | ε
@@ -194,28 +179,15 @@ Expr = NonTerminal("Expr")
 # C  -> P C'
 # C' -> == P | != P | < P | <= P | > P | >= P | ε
 # P  -> ( E ) | IDENTIFICADOR | VERDADEIRO | FALSO
-(
-    ExprLogica,
-    TermLogico,
-    FactorLogico,
-    Comparacao,
-    ExprLogicaR,
-    TermLogicoR,
-    ComparacaoR,
-    Primitivo,
-) = [
-    NonTerminal(name)
-    for name in [
-        "ExprLogica",
-        "TermLogico",
-        "FactorLogico",
-        "Comparacao",
-        "ExprLogicaR",
-        "TermLogicoR",
-        "ComparacaoR",
-        "Primitivo",
-    ]
-]
+
+ExprLogica = NonTerminal("ExprLogica")
+TermLogico = NonTerminal("TermLogico")
+FactorLogico = NonTerminal("FactorLogico")
+Comparacao = NonTerminal("Comparacao")
+ExprLogicaR = NonTerminal("ExprLogicaR")
+TermLogicoR = NonTerminal("TermLogicoR")
+ComparacaoR = NonTerminal("ComparacaoR")
+Primitivo = NonTerminal("Primitivo")
 
 non_terminals = [
     Programa,
@@ -390,8 +362,18 @@ tokens = Tokenizer.tokenize(text, grammar)
 ll1_table = LL1Table(grammar)
 # ll1_table.print_table() # TODO: melhorar a impressao da tabela depois, talvez com dataframe pandas
 ll1_parser_table = LL1ParserTable(ll1_table, Programa)
-ll1_parser_table.parse(tokens)
-print("--------------")
+
+# ll1_parser_table.parse(tokens)
+parsed = ll1_parser_table.parse(tokens)
+print("-"* 30)
+
+if parsed:
+    print("Análise sintática bem-sucedida!")
+else:
+    print("--------------")
+    print("Erro na análise sintática!")
+    print("Tokens não reconhecidos ou gramática inválida.")
+print("-"* 30)
 
 from utils.text import colorize_text
 print(colorize_text("Tokens encontrados:", "red"))

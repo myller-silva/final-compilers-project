@@ -20,7 +20,14 @@ class Symbol:
 
 
 class NonTerminal(Symbol):
-    pass
+    def __rshift__(self, rhs):
+        # Permite A >> [B, c] ou A >> B
+        if isinstance(rhs, list):
+            return Production(self, rhs)
+        elif isinstance(rhs, Symbol):
+            return Production(self, [rhs])
+        else:
+            raise TypeError("O lado direito deve ser um símbolo ou lista de símbolos.")
 
 
 class Terminal(Symbol):
@@ -186,8 +193,6 @@ class Token:
         return hash((self.terminal, self.lexeme))
 
 
-
-
 class Tokenizer:
     def __init__(self):
         pass
@@ -244,9 +249,9 @@ class Tokenizer:
 class LL1Table:  # TODO: LANCAR ERRO QUANDO TIVER UMA NOVA PRODUÇÃO PARA UMA CELULA JÁ PREENCHIDA
     def __init__(self, grammar: Grammar):
         self.grammar = grammar
-        self.table = self.build_ll1_table()
+        self.table = self._build_table()
 
-    def build_ll1_table(self):
+    def _build_table(self):
         # TODO: LANCAR ERRO QUANDO TIVER UMA NOVA PRODUÇÃO PARA UMA CELULA JÁ PREENCHIDA
         """Constrói a tabela LL(1) para a gramática fornecida."""
         table = {}

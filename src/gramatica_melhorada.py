@@ -77,53 +77,41 @@ op_atribuicao = Terminal("op_atribuicao", r"=")
 quebra_linha = Terminal("quebra_linha", r"\n")
 
 terminals = [
-
     comentario,
     espaco,
-    
     kw_var,
-    
     kw_inteiro,
     kw_real,
     kw_texto,
     kw_logico,
-    
     kw_se,
     kw_fim_se,
     kw_entao,
     kw_senao,
-    
     kw_enquanto,
     kw_faca,
     kw_fim_enquanto,
-    
     kw_repita,
     kw_vezes,
     kw_fim_repita,
-    
     kw_inicio_bloco,
     kw_fim_bloco,
-    
     # TODO: com ou sem parenteses?
     cmd_avancar,
     cmd_recuar,
     cmd_girar_direita,
     cmd_girar_esquerda,
     cmd_ir_para,
-    
     cmd_levantar_caneta,
     cmd_abaixar_caneta,
     cmd_definir_cor,
     cmd_definir_espessura,
-    
     cmd_limpar_tela,
     cmd_cor_de_fundo,
-    
     real,
     inteiro,
     texto,
     logico,
-    
     op_mais,
     op_menos,
     op_multiplicacao,
@@ -135,12 +123,10 @@ terminals = [
     op_menor_que,
     op_maior_que,
     op_modulo,
-    
     # OPERADORES LOGICOS
     op_e,
     op_ou,
     op_nao,
-    
     identificador,
     dois_pontos,
     ponto_virgula,
@@ -150,15 +136,15 @@ terminals = [
     fecha_parenteses,
     op_atribuicao,
     quebra_linha,
-
 ]
 
 
 # NAO TERMINAIS DA GRAMATICA
 from others.table_parser_ll1 import NonTerminal
+
 Programa = NonTerminal("Programa")
 Bloco = NonTerminal("Bloco")
-Declaracoes = NonTerminal("Declaracoes") # Declaracoes de Variaveis
+Declaracoes = NonTerminal("Declaracoes")  # Declaracoes de Variaveis
 DeclaracaoVariavel = NonTerminal("DeclaracaoVariavel")
 Identificadores = NonTerminal("Identificadores")
 IdentificadoresR = NonTerminal("IdentificadoresR")
@@ -173,122 +159,166 @@ Enquanto = NonTerminal("Enquanto")
 Movimento = NonTerminal("Movimento")
 ControleCaneta = NonTerminal("ControleCaneta")
 ControleTela = NonTerminal("ControleTela")
-# Expr = NonTerminal("Expr") # Expr aritmetica
-# ExpressaoLogica = NonTerminal("ExpressaoLogica")
-
 Tipo = NonTerminal("Tipo")
-
 Expr = NonTerminal("Expr")
-
 # GRAMATICA DE EXPRESSAO ARITIMETICA:
-# E -> T E' (Expressão é um termo seguido por uma sequência de soma ou subtração)
-# E' -> + T E' | - T E' | ε 
-# T -> F T' (Termo é um fator seguido por uma sequência de multiplicação ou divisão)
+# E -> T E'
+# E' -> + T E' | - T E' | ε
+# T -> F T'
 # T' -> * F T' | / F T' | ε
-# F -> NUM | ( E )  (Fator pode ser um número ou uma expressão entre parênteses)
-# Expr Aritmetica
-ExprAritmetica, Term, Factor = [NonTerminal(name) for name in ["ExprAritmetica", "Term", "Factor"]]
-ExprAritmeticaR, TermR = [NonTerminal(name) for name in ["ExprAritmeticaR", "TermR"]]
-Num = NonTerminal("Num")
-
+# F -> NUM | ( E )
+(
+    ExprAritmetica, 
+    Term, 
+    Factor, 
+    ExprAritmeticaR, 
+    TermR, 
+    Num
+) = [
+    NonTerminal(name)
+    for name in [
+        "ExprAritmetica", 
+        "Term", 
+        "Factor", 
+        "ExprAritmeticaR", 
+        "TermR", 
+        "Num"
+    ]
+]
 # GRAMATICA DE EXPRESSAO LOGICA:
-# E  -> T E' (Expressão é um termo seguido de uma sequência de operadores lógicos)
-# E' -> OR T E' | ε 
+# E  -> T E'
+# E' -> OR T E' | ε
 # T  -> F T'
 # T' -> AND F T' | ε
-# F  -> NOT F | C 
-# C  -> P C' 
+# F  -> NOT F | C
+# C  -> P C'
 # C' -> == P | != P | < P | <= P | > P | >= P | ε
-# P  -> ( E ) | IDENTIFICADOR | VERDADEIRO | FALSO   (Primitivo pode ser uma expressão entre parênteses, uma variável ou valor lógico)
-
-ExprLogica, TermLogico, FactorLogico, Comparacao, Primitivo = [NonTerminal(name) for name in ["ExprLogica", "TermLogico", "FactorLogico", "Comparacao", "Primitivo"]]
-ExprLogicaR, TermLogicoR, ComparacaoR = [NonTerminal(name) for name in ["ExprLogicaR", "TermLogicoR", "ComparacaoR"]]
-Primitivo = NonTerminal("Primitivo")
-# TODO: implementar os operadores logicos na analise lexica(tokenizer)
+# P  -> ( E ) | IDENTIFICADOR | VERDADEIRO | FALSO
+(
+    ExprLogica,
+    TermLogico,
+    FactorLogico,
+    Comparacao,
+    ExprLogicaR,
+    TermLogicoR,
+    ComparacaoR,
+    Primitivo,
+) = [
+    NonTerminal(name)
+    for name in [
+        "ExprLogica",
+        "TermLogico",
+        "FactorLogico",
+        "Comparacao",
+        "ExprLogicaR",
+        "TermLogicoR",
+        "ComparacaoR",
+        "Primitivo",
+    ]
+]
 
 non_terminals = [
-    Programa, 
-    Bloco, 
-    Declaracoes, 
-    DeclaracaoVariavel, 
+    Programa,
+    Bloco,
+    Declaracoes,
+    DeclaracaoVariavel,
     Identificadores,
     IdentificadoresR,
-    Comandos, 
-    Comando, 
-    Atribuicao, 
-    Condicional, 
-    Senao, 
-    LacoRepeticao, 
-    Repita, 
-    Enquanto, 
-    Movimento, 
-    ControleCaneta, 
-    ControleTela, 
+    Comandos,
+    Comando,
+    Atribuicao,
+    Condicional,
+    Senao,
+    LacoRepeticao,
+    Repita,
+    Enquanto,
+    Movimento,
+    ControleCaneta,
+    ControleTela,
     Tipo,
     Expr,
-    ExprAritmetica, Term, Factor, 
-    ExprAritmeticaR, TermR, 
-    Num, 
-    ExprLogica, TermLogico, FactorLogico, Comparacao, Primitivo, 
-    ExprLogicaR, TermLogicoR, ComparacaoR, 
-    Primitivo, 
-    
+    ExprAritmetica,
+    Term,
+    Factor,
+    ExprAritmeticaR,
+    TermR,
+    Num,
+    ExprLogica,
+    TermLogico,
+    FactorLogico,
+    Comparacao,
+    Primitivo,
+    ExprLogicaR,
+    TermLogicoR,
+    ComparacaoR,
+    Primitivo,
 ]
 
 # PRODUÇÕES DA GRAMATICA
 from others.table_parser_ll1 import Production
+
 productions = [
-    # Programa
+    # --- Programa ---
     Production(Programa, [Bloco]),
     Production(Bloco, [kw_inicio_bloco, Declaracoes, Comandos, kw_fim_bloco]),
-
-    # Declaracoes 
+    # --- Declaracoes ---
     Production(Declaracoes, [DeclaracaoVariavel, Declaracoes]),
     Production(Declaracoes, []),
     Production(DeclaracaoVariavel, [kw_var, Tipo, dois_pontos, Identificadores, ponto_virgula]),
-    # Production(Identificadores, [identificador, virgula, Identificadores]),
-    # Production(Identificadores, [identificador]),
     Production(Identificadores, [identificador, IdentificadoresR]),
     Production(IdentificadoresR, [virgula, Identificadores]),
     Production(IdentificadoresR, []),
-
-
     # Declarar variaveis tipo texto aqui tambem? por exemplo, text = "ola mundo";, ou deixar a declaracao de texto em qualquer parte do codigo? # TODO: perguntar ao professor
     # Production(DeclaracaoVariavel, [identificador, op_atribuicao, texto, ponto_virgula]) #ex: 'text = "ola mundo";'
-    # Tipo
+    # --- Tipo --- 
     Production(Tipo, [kw_inteiro]),
     Production(Tipo, [kw_real]),
     Production(Tipo, [kw_texto]),
     Production(Tipo, [kw_logico]),
-    
-    # Comandos
+    # --- Comandos --- 
     Production(Comandos, [Comando, Comandos]),
     Production(Comandos, []),
-    # Comando
+    # --- Comando --- 
     Production(Comando, [Atribuicao]),
     Production(Comando, [Condicional]),
     Production(Comando, [LacoRepeticao]),
     Production(Comando, [Movimento]),
     Production(Comando, [ControleCaneta]),
     Production(Comando, [ControleTela]),
-    # Atribuicao
+    # --- Atribuicao --- 
     Production(Atribuicao, [identificador, op_atribuicao, Expr, ponto_virgula]),
-    # Condicional (SE)
+    # --- Condicional (SE) --- 
     Production(Condicional, [kw_se, ExprLogica, kw_entao, Comandos, Senao, kw_fim_se, ponto_virgula]),
     Production(Senao, [kw_senao, Comandos]),
     Production(Senao, []),
-    # LacoRepeticao
+    # --- LacoRepeticao --- 
     Production(LacoRepeticao, [Repita]),
     Production(LacoRepeticao, [Enquanto]),
-    # LacoRepeticao (Repita)
-    Production(Repita, [kw_repita, ExprAritmetica, kw_vezes, Comandos, kw_fim_repita, ponto_virgula]),
-    # LacoRepeticao (Enquanto)
-    Production(Enquanto, [kw_enquanto, ExprLogica, kw_faca, Comandos, kw_fim_enquanto, ponto_virgula]),
-
+    # --- LacoRepeticao (Repita) --- 
+    Production(Repita,[kw_repita, ExprAritmetica, kw_vezes, Comandos, kw_fim_repita, ponto_virgula]),
+    #  --- LacoRepeticao (Enquanto) --- 
+    Production(Enquanto,[kw_enquanto, ExprLogica, kw_faca, Comandos, kw_fim_enquanto, ponto_virgula]),
+    
+    # --- Movimento ---
+    Production(Movimento, [cmd_avancar, ExprAritmetica, ponto_virgula]),
+    Production(Movimento, [cmd_recuar, ExprAritmetica, ponto_virgula]),
+    Production(Movimento, [cmd_girar_direita, ExprAritmetica, ponto_virgula]),
+    Production(Movimento, [cmd_girar_esquerda, ExprAritmetica, ponto_virgula]),
+    Production(Movimento, [cmd_ir_para, Expr, ExprAritmetica, ponto_virgula]),
+    # --- Controle da caneta --- 
+    Production(ControleCaneta, [cmd_levantar_caneta, ponto_virgula]),
+    Production(ControleCaneta, [cmd_abaixar_caneta, ponto_virgula]),
+    Production(ControleCaneta, [cmd_definir_cor, ExprAritmetica, ponto_virgula]),
+    Production(ControleCaneta, [cmd_definir_espessura, ExprAritmetica, ponto_virgula]),
+    # --- Controle de tela ---
+    Production(ControleTela, [cmd_limpar_tela, ponto_virgula]),
+    Production(ControleTela, [cmd_cor_de_fundo, Expr, ponto_virgula]),
+    
+    # --- Expressões --- (Aritméticas e Lógicas)
     Production(Expr, [ExprAritmetica]),
     Production(Expr, [ExprLogica]),
-
-    # --- Expr Aritmetica --- 
+    
+    # --- Expr Aritmetica ---
     Production(ExprAritmetica, [Term, ExprAritmeticaR]),
     Production(ExprAritmeticaR, [op_mais, Term, ExprAritmeticaR]),
     Production(ExprAritmeticaR, [op_menos, Term, ExprAritmeticaR]),
@@ -302,11 +332,9 @@ productions = [
     Production(Factor, [abre_parenteses, ExprAritmetica, fecha_parenteses]),
     Production(Num, [inteiro]),
     Production(Num, [real]),
-    Production(Num, [identificador]), # TODO: verificar depois se faz sentido colocar identificador aqui, mas provavelmente sim
-    Production(Num, [texto]), # TODO: verificar depois se faz sentido colocar texto aqui, mas provavelmente não
-
-    Production(Expr, [ExprLogica]), #TODO: verificar se uma Expr pode ser uma expressao logica ou se devo fazer separadamente
-    # --- Expr Lógica --- TODO: verificar se tá correto
+    Production(Num, [identificador]),  # TODO: verificar depois se faz sentido colocar identificador aqui, mas provavelmente sim
+    
+    # --- Expr Lógica --- 
     Production(ExprLogica, [TermLogico, ExprLogicaR]),
     Production(ExprLogicaR, [op_ou, TermLogico, ExprLogicaR]),
     Production(ExprLogicaR, []),
@@ -323,37 +351,16 @@ productions = [
     Production(ComparacaoR, [op_menor_que, Primitivo]),
     Production(ComparacaoR, [op_maior_que, Primitivo]),
     Production(ComparacaoR, []),
-    Production(Primitivo, [abre_parenteses, ExprLogica, fecha_parenteses]),
-    Production(Primitivo, [logico]),    
-    Production(Primitivo, [inteiro]),
-
-    # Production(Primitivo, [identificador]), # TODO: verificar se precisa colocar identificador aqui, mas provavelmente sim 
-
-    # Movimento
-    Production(Movimento, [cmd_avancar, ExprAritmetica, ponto_virgula]),
-    Production(Movimento, [cmd_recuar, ExprAritmetica, ponto_virgula]),
-    Production(Movimento, [cmd_girar_direita, ExprAritmetica, ponto_virgula]),
-    Production(Movimento, [cmd_girar_esquerda, ExprAritmetica, ponto_virgula]),
-    Production(Movimento, [cmd_ir_para, Expr, ExprAritmetica, ponto_virgula]),
-    # Controle da caneta
-    Production(ControleCaneta, [cmd_levantar_caneta, ponto_virgula]),
-    Production(ControleCaneta, [cmd_abaixar_caneta, ponto_virgula]),
-    Production(ControleCaneta, [cmd_definir_cor, ExprAritmetica, ponto_virgula]),
-    Production(ControleCaneta, [cmd_definir_espessura, ExprAritmetica, ponto_virgula]),
-    # Controle de tela
-    Production(ControleTela, [cmd_limpar_tela, ponto_virgula]),
-    Production(ControleTela, [cmd_cor_de_fundo, Expr, ponto_virgula]),
-
-    #
-    
+    Production(Primitivo, [logico]),
+    Production(Primitivo, [identificador]), # TODO Production(Primitivo, [identificador]), talvez dê ambiguidade pq a partir de ExprAritmetica pode chegar em Production(Num, [identificador]),
+    Production(Primitivo, [abre_parenteses, ExprLogica, fecha_parenteses]), # TODO: pode causar ambiguidade se ExprAritmetica for Primitivo
+    # Production(Primitivo, [ExprAritmetica]), # TODO: o primitivo de uma expressao o logica é uma expressao aritmetica, ou um idenficador, ou um logico
 ]
 
-
-for prod in productions:
-    print(prod)
-
-
-# verificar a string
+# TODO: adicionar a opcao de atribuir valor diretamente na declaracao da variavel, por exemplo: var inteiro : contador = 0;
+# TODO: se tiver duas variaveis, que tenha duas atribuicoes, por exemplo: var inteiro : contador, preco = 1, 2;
+# TODO: EXPR, ExprAritmetica, ExprLogica estão erradas, corrigir as produções.
+# ERROR: nenhuma producao para (Comandos, EOF)
 text = """
 inicio
     var inteiro : passo;
@@ -372,16 +379,24 @@ grammar = Grammar(
     non_terminals=non_terminals,
     productions=productions
 )
+
+print("--------------")
+print("Gramática")
+print("--------------")
+print(grammar)
+
 tokens = Tokenizer.tokenize(text, grammar)
 
-print("Tokens encontrados:")
-print(tokens)
-
-ll1_table = LL1Table(grammar) # TODO: LANCAR ERRO QUANDO TIVER UMA NOVA PRODUÇÃO PARA UMA CELULA JÁ PREENCHIDA
-ll1_table.print_table()
+ll1_table = LL1Table(grammar)
+# ll1_table.print_table() # TODO: melhorar a impressao da tabela depois, talvez com dataframe pandas
 ll1_parser_table = LL1ParserTable(ll1_table, Programa)
 ll1_parser_table.parse(tokens)
 print("--------------")
-# print(tokens)
+
+from utils.text import colorize_text
+print(colorize_text("Tokens encontrados:", "red"))
 for token in tokens:
-    print(token)
+    print(
+        colorize_text(f"{token.terminal.name}", "blue"),
+        colorize_text(f"{token.lexeme}", "yellow")
+    )

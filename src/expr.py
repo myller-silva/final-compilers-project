@@ -154,21 +154,33 @@ grammar = Grammar(
 )
 
 ll1_table = LL1Table(grammar=grammar)
-
 parser = LL1ParserTable(table=ll1_table, start_symbol=grammar.start_symbol)
-text = """
-(a + b) * (c - d) || !e && f * g / h + i - j
-"""
 
-print('--' * 20)
-print(f"Input text: {text}")
-tokens = Tokenizer.tokenize(text=text, grammar=grammar)
-print('--' * 20)
-print("Tokens:")
-for token in tokens:
-    print(token)
+texts = [
+    " a || !e && f * g / h + i - j",
+    "x || y && z",
+    "!(a + b) * c",
+    "x + y * z - w / v",
+    "a || b && c || d",
+    "x * (y + z) - w / v",
+    "!(x + y) * z || a && b",
+    "x + (y - z) * (a / b)",
+    "!(x || y) && (z + a) * b",
+    "x + y * z - (w / v) || a && b",
+    "((a + b) * c) || (d - e) && f",
+    "x || (y && z) * (a + b)",
+    "!(x + y) || (z * a) && b",
+    "x * (y + z) - (w / v) || a && b",
+    "!(a + b) * (c - d) || e && f * g / h + i - j",
+]
 
-parsed = parser.parse(tokens=tokens)  # Example input
+from utils.text import colorize_text
 print('--' * 20)
-print("Parsed result:")
-print(parsed)
+for text in texts:
+    # print('--' * 20)
+    tokens = Tokenizer.tokenize(text=text, grammar=grammar)
+
+    parsed = parser.parse(tokens=tokens)  # Example input
+    print(colorize_text(str(parsed), color="blue" if parsed else "red"))
+    print('--' * 20)
+    

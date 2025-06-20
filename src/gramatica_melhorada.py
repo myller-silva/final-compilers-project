@@ -1,53 +1,38 @@
-# TERMINAIS DA GRAMATICA
-from others.table_parser_ll1 import Production, Terminal
-
-# TODO: verificar se precisar usar os boundares (\b dos regex para evitar conflitos, ou se nao precisa)
-# talvez precise pq to removendo os espaços em branco antes de tokenizar, mas nao sei se isso interfere no regex
-# comentario = Terminal("comentario", r"//.*")
+# --- TERMINAIS DA GRAMATICA ---
+from others.table_parser_ll1 import Terminal
 
 kw_var = Terminal("kw_var", r"\bvar\b")
-
 kw_inteiro = Terminal("kw_inteiro", r"\binteiro\b")
 kw_real = Terminal("kw_real", r"\breal\b")
 kw_texto = Terminal("kw_texto", r"\btexto\b")
 kw_logico = Terminal("kw_logico", r"\blogico\b")
-
 kw_se = Terminal("kw_se", r"\bse\b")
 kw_fim_se = Terminal("kw_fim_se", r"\bfim_se\b")
 kw_entao = Terminal("kw_entao", r"\bentao\b")
 kw_senao = Terminal("kw_senao", r"\bsenao\b")
-
 kw_enquanto = Terminal("kw_enquanto", r"\benquanto\b")
 kw_faca = Terminal("kw_faca", r"\bfaca\b")
 kw_fim_enquanto = Terminal("kw_fim_enquanto", r"\bfim_enquanto\b")
-
 kw_repita = Terminal("kw_repita", r"\brepita\b")
 kw_vezes = Terminal("kw_vezes", r"\bvezes\b")
 kw_fim_repita = Terminal("kw_fim_repita", r"\bfim_repita\b")
-
 kw_inicio_bloco = Terminal("kw_inicio_bloco", r"\binicio\b")
 kw_fim_bloco = Terminal("kw_fim_bloco", r"\bfim\b")
-
-# TODO: com ou sem parenteses?
 cmd_avancar = Terminal("cmd_avancar", r"\b(avancar)\b")
 cmd_recuar = Terminal("cmd_recuar", r"\b(recuar)\b")
 cmd_girar_direita = Terminal("cmd_girar_direita", r"\b(girar_direita)\b")
 cmd_girar_esquerda = Terminal("cmd_girar_esquerda", r"\b(girar_esquerda)\b")
 cmd_ir_para = Terminal("cmd_ir_para", r"\b(ir_para)\b")
-
 cmd_levantar_caneta = Terminal("cmd_levantar_caneta", r"\b(levantar_caneta)\b")
 cmd_abaixar_caneta = Terminal("cmd_abaixar_caneta", r"\b(abaixar_caneta)\b")
 cmd_definir_cor = Terminal("cmd_definir_cor", r"\b(definir_cor)\b")
 cmd_definir_espessura = Terminal("cmd_definir_espessura", r"\b(definir_espessura)\b")
-
 cmd_limpar_tela = Terminal("cmd_limpar_tela", r"\b(limpar_tela)\b")
 cmd_cor_de_fundo = Terminal("cmd_cor_de_fundo", r"\b(cor_de_fundo)\b")
-
 real = Terminal("real", r"\d+\.\d+")
 inteiro = Terminal("inteiro", r"\d+")
 texto = Terminal("texto", r'"[^"]*"')
 logico = Terminal("logico", r"\b(verdadeiro|falso)\b")
-
 op_mais = Terminal("op_mais", r"\+", repr="+")
 op_menos = Terminal("op_menos", r"-", repr="-")
 op_multiplicacao = Terminal("op_multiplicacao", r"\*", repr="*")
@@ -59,12 +44,9 @@ op_maior_ou_igual = Terminal("op_maior_ou_igual", r">=", repr=">=")
 op_menor_que = Terminal("op_menor_que", r"<", repr="<")
 op_maior_que = Terminal("op_maior_que", r">", repr=">")
 op_modulo = Terminal("op_modulo", r"%", repr="%")
-
-# OPERADORES LOGICOS
 op_e = Terminal("op_e", r"&&")
 op_ou = Terminal("op_ou", r"\|\|")
 op_nao = Terminal("op_nao", r"!")
-
 identificador = Terminal("identificador", r"[a-zA-Z_][a-zA-Z_0-9]*")
 dois_pontos = Terminal("dois_pontos", r":")
 ponto_virgula = Terminal("ponto_virgula", r";")
@@ -134,7 +116,7 @@ terminals = [
 ]
 
 
-# NAO TERMINAIS DA GRAMATICA
+# --- NAO TERMINAIS DA GRAMATICA ---
 from others.table_parser_ll1 import NonTerminal
 
 Programa = NonTerminal("Programa")
@@ -198,12 +180,10 @@ non_terminals = [
     AddExprTail,
     MulExpr,
     MulExprTail,
-    # UnaryExpr,
     Primary,
 ]
 
-# PRODUÇÕES DA GRAMATICA
-
+# --- PRODUÇÕES DA GRAMATICA ---
 productions = [
     # --- Programa ---
     Programa >> [kw_inicio_bloco, Declaracoes, Comandos, kw_fim_bloco],
@@ -211,15 +191,11 @@ productions = [
     Declaracoes >> [DeclaracaoVariavel, Declaracoes],
     Declaracoes >> [],
     DeclaracaoVariavel >> [kw_var, Tipo, dois_pontos, Identificadores, ponto_virgula],
-    
     Identificadores >> [identificador, IdentificadoresR],
     IdentificadoresR >> [virgula, identificador, Atribuicao, Primary, virgula, Primary],
     IdentificadoresR >> [],
     Atribuicao >> [op_atribuicao],
     Atribuicao >> [virgula, identificador, op_atribuicao, Primary, virgula],
-    
-    
-    # Declarar variaveis tipo texto aqui tambem? por exemplo, text = "ola mundo";, ou deixar a declaracao de texto em qualquer parte do codigo? # TODO: perguntar ao professor
     # --- Tipo ---
     Tipo >> [kw_inteiro],
     Tipo >> [kw_real],
@@ -281,7 +257,7 @@ productions = [
     AddExprTail >> [op_maior_ou_igual, MulExpr, AddExprTail],
     AddExprTail >> [op_menor_que, MulExpr, AddExprTail],
     AddExprTail >> [op_maior_que, MulExpr, AddExprTail],
-    AddExprTail >> [],  # ε representado como lista vazia
+    AddExprTail >> [],
     MulExpr >> [Primary, MulExprTail],
     MulExprTail >> [op_multiplicacao, Primary, MulExprTail],
     MulExprTail >> [op_div, Primary, MulExprTail],
@@ -295,10 +271,6 @@ productions = [
     Primary >> [logico],
 ]
 
-# TODO: adicionar a opcao de atribuir valor diretamente na declaracao da variavel, por exemplo: var inteiro : contador = 0;
-# TODO: se tiver duas variaveis, que tenha duas atribuicoes, por exemplo: var inteiro : contador, preco = 1, 2;
-# TODO: EXPR, ExprAritmetica, ExprLogica estão erradas, corrigir as produções.
-# ERROR: nenhuma producao para (Comandos, EOF)
 text = """
 inicio
     var inteiro : a, b, c = 3, 1, a;

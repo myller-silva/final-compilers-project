@@ -5,7 +5,7 @@ from utils import print_anytree
 
 from tokenizer import Tokenizer
 from parser import RecursiveDescentParser
-from constants import PONTO_VIRGULA, KW_INICIO_BLOCO, KW_FIM_BLOCO
+from utils.constants import PONTO_VIRGULA, KW_INICIO_BLOCO, KW_FIM_BLOCO
 
 
 # GRAMATICA

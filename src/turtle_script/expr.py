@@ -45,7 +45,12 @@ Literal      -> [0-9]+
 
 """
 
-from others.table_parser_ll1 import NonTerminal, Terminal
+from colorama import Fore
+import re
+from table_parser_ll1 import NonTerminal, Terminal
+from table_parser_ll1 import Grammar
+from table_parser_ll1 import LL1Table, LL1ParserTable, Tokenizer
+
 
 # --- NON-TERMINALS ---
 Expr = NonTerminal("Expr")
@@ -82,7 +87,7 @@ non_terminals = [
     Literal,
 ]
 
-import re
+
 # --- TERMINALS ---
 iden = Terminal("iden", r"[a-zA-Z_][a-zA-Z0-9_]*")
 inteiro = Terminal("int", r"[0-9]+")
@@ -139,12 +144,12 @@ productions = [
     Literal >> [inteiro],
 ]
 
-print("Productions:")
+# print("Productions:")
+print(f"{Fore.LIGHTYELLOW_EX}Productions:")
 for prod in productions:
-    print(prod)
-
-from others.table_parser_ll1 import Grammar
-from others.table_parser_ll1 import LL1Table, LL1ParserTable, Tokenizer
+    print(f"{Fore.LIGHTBLUE_EX}{prod.lhs}", end="")
+    print(f"{Fore.LIGHTBLACK_EX} -> ", end="")
+    print(f"{Fore.LIGHTBLUE_EX}{' '.join(str(sym) for sym in prod.rhs)}")
 
 grammar = Grammar(
     start_symbol=Expr,
@@ -174,13 +179,13 @@ texts = [
     "!(a + b) * (c - d) || e && f * g / h + i - j",
 ]
 
-from utils.text import colorize_text
-print('--' * 20)
-for text in texts:
-    # print('--' * 20)
-    tokens = Tokenizer.tokenize(text=text, grammar=grammar)
 
-    parsed = parser.parse(tokens=tokens)  # Example input
-    print(colorize_text(str(parsed), color="blue" if parsed else "red"))
-    print('--' * 20)
-    
+print("--" * 20)
+for text in texts:
+    tokens = Tokenizer.tokenize(text=text, grammar=grammar)
+    parsed = parser.parse(tokens=tokens)
+    if parsed:
+        print(f"Parsed successfully: {Fore.GREEN}{text}")
+    else:
+        print(f"Failed to parse: {Fore.RED}{text}")
+    print("--" * 20)

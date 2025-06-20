@@ -384,33 +384,31 @@ if __name__ == "__main__":
         non_terminals=[S, A, B],
         productions=productions,
     )
-
-    print("Produções:")
+    print(Fore.YELLOW+ "Produções:")
     for prod in grammar.productions:
         print(prod)
-    print("\nTerminais da gramática:")
+    print(Fore.YELLOW+"\nTerminais da gramática:")
     print(grammar.terminals)
-    print("Não terminais da gramática:")
+    print(Fore.YELLOW+"Não terminais da gramática:")
     print(grammar.non_terminals)
 
-    print("\nConjuntos FIRST:")
+    print(Fore.YELLOW+"\nConjuntos FIRST:")
     for nt, first in grammar.first_sets.items():
-        print(f"{nt}: {first}")
-    print("\nConjuntos FOLLOW:")
+        print(Fore.CYAN + f"{nt}:", Style.RESET_ALL, first)
+    print(Fore.YELLOW+"\nConjuntos FOLLOW:")
     for nt, follow in grammar.follow_sets.items():
-        print(f"{nt}: {follow}")
+        print(Fore.CYAN + f"{nt}:", Style.RESET_ALL, follow)
 
     ll1_table = LL1Table(grammar)
     df = ll1_table.to_dataframe()
-    print("\nTabela LL(1) como DataFrame:")
+    print(Fore.YELLOW + "\nTabela LL(1) como DataFrame:")
     print(df)
 
     tokens = Tokenizer.tokenize("acdb", grammar)
     parser = LL1ParserTable(ll1_table, S)
-    print("\nTestando parsing LL(1):")
+    print(Fore.YELLOW + "\nTestando parsing LL(1):")
     parsed = parser.parse(tokens)
     if parsed:
-        print("ACEITA.")
+        print(Fore.GREEN + "ACEITA." + Style.RESET_ALL)
     else:
-        print("REJEITADA.")
-    
+        print(Fore.RED + "REJEITADA." + Style.RESET_ALL)

@@ -244,7 +244,7 @@ class RecursiveDescentParser:
 
 
 if __name__ == "__main__":
-    from constants import *
+    from turtle_script_v1.utils.constants import *
     from tokenizer import Tokenizer
     from utils import print_grammar
     from utils import print_anytree

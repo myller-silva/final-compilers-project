@@ -4,7 +4,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
 import unittest
-from others.table_parser_ll1 import (
+from turtle_script.table_parser_ll1 import (
     Symbol,
     NonTerminal,
     Terminal,

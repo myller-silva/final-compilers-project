@@ -1,6 +1,6 @@
 # Tokenizador para a linguagem TurtleScript
 import re
-from constants import *
+from utils.constants import *
 
 
 class Tokenizer:

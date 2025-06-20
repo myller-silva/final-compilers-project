@@ -1,4 +1,4 @@
-from constants import *
+from utils.constants import *
 grammar = [
     # Programa
     ("Programa", ["Bloco"]),

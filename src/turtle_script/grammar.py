@@ -1,5 +1,9 @@
+from colorama import Fore
+from table_parser_ll1 import Terminal
+from table_parser_ll1 import NonTerminal
+from table_parser_ll1 import Grammar, LL1Table, LL1ParserTable, Tokenizer
+
 # --- TERMINAIS DA GRAMATICA ---
-from others.table_parser_ll1 import Terminal
 
 kw_var = Terminal("kw_var", r"\bvar\b")
 kw_inteiro = Terminal("kw_inteiro", r"\binteiro\b")
@@ -44,17 +48,17 @@ op_maior_ou_igual = Terminal("op_maior_ou_igual", r">=", repr=">=")
 op_menor_que = Terminal("op_menor_que", r"<", repr="<")
 op_maior_que = Terminal("op_maior_que", r">", repr=">")
 op_modulo = Terminal("op_modulo", r"%", repr="%")
-op_e = Terminal("op_e", r"&&")
-op_ou = Terminal("op_ou", r"\|\|")
-op_nao = Terminal("op_nao", r"!")
+op_e = Terminal("op_e", r"&&", repr="&&")
+op_ou = Terminal("op_ou", r"\|\|", repr="||")
+op_nao = Terminal("op_nao", r"!", repr="!")
 identificador = Terminal("identificador", r"[a-zA-Z_][a-zA-Z_0-9]*")
-dois_pontos = Terminal("dois_pontos", r":")
-ponto_virgula = Terminal("ponto_virgula", r";")
-ponto = Terminal("ponto", r"\.")
-virgula = Terminal("virgula", r",")
-abre_parenteses = Terminal("abre_parenteses", r"\(")
-fecha_parenteses = Terminal("fecha_parenteses", r"\)")
-op_atribuicao = Terminal("op_atribuicao", r"=")
+dois_pontos = Terminal("dois_pontos", r":", repr=":")
+ponto_virgula = Terminal("ponto_virgula", r";", repr=";")
+ponto = Terminal("ponto", r"\.", repr=".")
+virgula = Terminal("virgula", r",", repr=",")
+abre_parenteses = Terminal("abre_parenteses", r"\(", repr="(")
+fecha_parenteses = Terminal("fecha_parenteses", r"\)", repr=")")
+op_atribuicao = Terminal("op_atribuicao", r"=", repr="=")
 quebra_linha = Terminal("quebra_linha", r"\n")
 
 terminals = [
@@ -117,7 +121,6 @@ terminals = [
 
 
 # --- NAO TERMINAIS DA GRAMATICA ---
-from others.table_parser_ll1 import NonTerminal
 
 Programa = NonTerminal("Programa")
 Bloco = NonTerminal("Bloco")
@@ -271,24 +274,6 @@ productions = [
     Primary >> [logico],
 ]
 
-text = """
-inicio
-    var inteiro : a, b, c = 3, 1, a;
-    teste = "teste";
-    se 1 * ( verdadeiro  != falso + 12) entao
-        // negação
-        avancar ! verdadeiro;
-        avancar ! (verdadeiro);
-        avancar ! (verdadeiro || falso);
-        avancar ! (verdadeiro && falso);
-        avancar  (verdadeiro == 1);
-        
-    senao
-        girar_direita 10;
-    fim_se;
-fim
-"""
-from others.table_parser_ll1 import Grammar, LL1Table, LL1ParserTable, Tokenizer
 
 grammar = Grammar(
     start_symbol=Programa,
@@ -297,30 +282,45 @@ grammar = Grammar(
     productions=productions,
 )
 
-print("--------------")
-print("Gramática")
-print("--------------")
-print(grammar)
+if __name__ == "__main__":
+    print("--------------")
+    print("Gramática")
+    print("--------------")
+    print(grammar)
 
-tokens = Tokenizer.tokenize(text, grammar)
-from utils.text import colorize_text
+    text = """
+    inicio
+        var inteiro : a, b, c = 3, 1, a;
+        teste = "teste";
+        se 1 * ( verdadeiro  != falso + 12) entao
+            // negação
+            avancar ! verdadeiro;
+            avancar ! (verdadeiro);
+            avancar ! (verdadeiro || falso);
+            avancar ! (verdadeiro && falso);
+            avancar  (verdadeiro == 1);
+            
+        senao
+            girar_direita 10;
+        fim_se;
+    fim
+    """
 
-print(colorize_text("Tokens encontrados:", "red"))
-for token in tokens:
-    print(
-        colorize_text(f"{token.terminal.name}", "blue"),
-        colorize_text(f"{token.lexeme}", "yellow"),
-    )
+    tokens = Tokenizer.tokenize(text, grammar)
 
+    print(Fore.RED + "Tokens encontrados:")
+    for token in tokens:
+        print(Fore.BLUE + token.terminal.name, end=": ")
+        print(Fore.YELLOW + token.lexeme)
 
-ll1_table = LL1Table(grammar)
-ll1_parser_table = LL1ParserTable(ll1_table, Programa)
-parsed = ll1_parser_table.parse(tokens)
+    ll1_table = LL1Table(grammar)
+    ll1_parser_table = LL1ParserTable(ll1_table, Programa)
+    parsed = ll1_parser_table.parse(tokens)
 
-print("-" * 30)
+    print("-" * 30)
 
-if parsed:
-    print("Análise sintática bem-sucedida!")
-else:
-    print("Erro na análise sintática!")
-print("-" * 30)
+    if parsed:
+        print(Fore.GREEN + "Análise sintática bem-sucedida!")
+    else:
+        print(Fore.RED + "Erro na análise sintática!")
+    print("-" * 30)

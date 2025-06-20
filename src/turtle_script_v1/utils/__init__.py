@@ -1,5 +1,6 @@
 from anytree import RenderTree
-
+from colorama import Fore, init
+init(autoreset=True)
 
 def print_anytree(
     tree,
@@ -8,13 +9,15 @@ def print_anytree(
     color_reset="\033[0m",
 ):
     """Printa uma árvore formada com a biblioteca anytree."""
+    color_terminal_type = Fore.MAGENTA
+    color_terminal_value = Fore.YELLOW
     for pre, _, node in RenderTree(tree):
         if ": " in node.name:  # Terminal: 'TIPO: valor'
             tipo, valor = node.name.split(": ", 1)
             print(
-                f"{pre}{color_terminal_type}{tipo}{color_reset}",
+                f"{pre}{color_terminal_type}{tipo}{color_reset} "
                 f"{color_terminal_value}{valor}{color_reset}"
-                )
+            )
         else:
             print(f"{pre}{node.name}")
 

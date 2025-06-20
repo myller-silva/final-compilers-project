@@ -1,6 +1,8 @@
 import re
+import pandas as pd
 from collections import defaultdict
 from colorama import Fore, Style, init
+
 
 init(autoreset=True)
 
@@ -11,7 +13,6 @@ class Symbol:
         self.repr = repr if repr is not None else name
 
     def __repr__(self):
-        # return self.name
         return f"{self.repr}"
 
     def __eq__(self, other):
@@ -38,7 +39,6 @@ class NonTerminal(Symbol):
 class Terminal(Symbol):
     def __init__(self, name: str, regex: str = None, repr: str = None):
         super().__init__(name, repr)
-        # Por padrão, o regex é o próprio nome
         self.regex = regex if regex is not None else f"{name}"
 
 
@@ -87,6 +87,7 @@ class Grammar:
         self.follow_sets = self.compute_follow_sets()
 
     def _validate_productions(self):
+        """Valida as produções da gramática."""
         erros = []
         for prod in self.productions:
             if not isinstance(prod, Production):
@@ -106,9 +107,11 @@ class Grammar:
         return f"Grammar:\nStart Symbol: {self.start_symbol}\nProductions:\n{productions_str}"
 
     def compute_first_sets(self):
+        """Calcula os conjuntos FIRST para cada não terminal da gramática."""
         first = defaultdict(set)
 
         def first_of(symbol):
+            """Calcula o conjunto FIRST para um símbolo."""
             if isinstance(symbol, Terminal):
                 return {symbol}
             return first[symbol]
@@ -138,6 +141,7 @@ class Grammar:
         return first
 
     def compute_follow_sets(self):
+        """Calcula os conjuntos FOLLOW para cada não terminal da gramática."""
         follow = defaultdict(set)
         follow[self.start_symbol].add(Grammar.EOF)
         changed = True
@@ -164,6 +168,7 @@ class Grammar:
         return follow
 
     def first_rhs(self, symbols: list[Symbol]) -> set:
+        """Calcula o conjunto FIRST para uma sequência de símbolos (lado direito de uma produção)."""
         result = set()
         for sym in symbols:
             if isinstance(sym, Terminal):
@@ -200,10 +205,11 @@ class Token:
 
 class Tokenizer:
     def __init__(self):
-        pass
+        super().__init__()
 
     @staticmethod
     def tokenize(text: str, grammar: Grammar) -> list[Token]:
+        """Tokeniza o texto de entrada usando a gramática fornecida."""
         tokens = []
         # Ignorar comentários
         comment_pattern = r"//.*?$"
@@ -218,8 +224,7 @@ class Tokenizer:
         token_regex = "|".join(f"(?P<{pair[0]}>{pair[1]})" for pair in token_patterns)
         match_token = re.compile(token_regex).match
         # Tokenização:
-        position = 0
-        line_number = 1
+        position, line_number = 0, 1
         terminals = Tokenizer._get_terminals(grammar)
         while position < len(text):
             # Pular espaços em branco
@@ -257,54 +262,42 @@ class LL1Table:  # TODO: LANCAR ERRO QUANDO TIVER UMA NOVA PRODUÇÃO PARA UMA C
         self.table = self._build_table()
 
     def _build_table(self):
-        # TODO: LANCAR ERRO QUANDO TIVER UMA NOVA PRODUÇÃO PARA UMA CELULA JÁ PREENCHIDA
-        """Constrói a tabela LL(1) para a gramática fornecida."""
+        """
+        Constrói a tabela LL(1) para a gramática fornecida.
+        Retorna um dicionário onde as chaves são tuplas (não_terminal, terminal)
+        e os valores são as produções correspondentes.
+        Se uma célula já estiver preenchida, lança um erro.
+        """
+
         table = dict()
+
+        def raise_error(lhs, terminal, prod):
+            error = f"Erro: célula ({lhs}, {terminal}) já preenchida com {table[(lhs, terminal)]} ao tentar inserir {prod}."
+            raise ValueError(error)
+
         for prod in self.grammar.productions:
             lhs, rhs = prod.lhs, prod.rhs
             first_of_rhs = self.grammar.first_rhs(rhs)
             for terminal in first_of_rhs:
                 if terminal != Grammar.EPSILON:
                     if (lhs, terminal) in table:
-                        raise ValueError(
-                            f"Erro: célula ({lhs}, {terminal}) já preenchida com {table[(lhs, terminal)]} ao tentar inserir {prod}."
-                        )
+                        raise_error(lhs, terminal, prod)
                     table[(lhs, terminal)] = prod
             if Grammar.EPSILON in first_of_rhs:
                 for terminal in self.grammar.follow_sets[lhs]:
                     if (lhs, terminal) in table:
-                        raise ValueError(
-                            f"Erro: célula ({lhs}, {terminal}) já preenchida com {table[(lhs, terminal)]} ao tentar inserir {prod}."
-                        )
+                        raise_error(lhs, terminal, prod)
                     table[(lhs, terminal)] = prod
         return table
 
-    def print_table(self):
-        terminals = self.grammar.terminals
-        non_terminals = self.grammar.non_terminals
-        header = f"{'NT/T':>5}"
-        for t in terminals:
-            header += f"{Fore.CYAN}{str(t):>20}{Style.RESET_ALL}"
-        print(header)
-        print(Fore.YELLOW + "-" * (5 + 20 * len(terminals)) + Style.RESET_ALL)
-        for nt in non_terminals:
-            row = f"{Fore.CYAN}{str(nt):>5}{Style.RESET_ALL}"
-            for t in terminals:
-                prod = self.table.get((nt, t))
-                if prod:
-                    cell = f"{Fore.GREEN}{str(prod):>20}{Style.RESET_ALL}"
-                else:
-                    cell = f"{Fore.RED}{'':>20}{Style.RESET_ALL}"
-                row += cell
-            print(row)
-    
     def to_dataframe(self):
-        import pandas as pd
+        """Converte a tabela LL(1) em um DataFrame do pandas."""
         df = pd.DataFrame.from_dict(self.table, orient="index")
-        df.index = pd.MultiIndex.from_tuples(df.index, names=['NonTerminal', 'Terminal'])
+        df.index = pd.MultiIndex.from_tuples(
+            df.index, names=["NonTerminal", "Terminal"]
+        )
         df = df.unstack()
-        return df 
-        
+        return df
 
 
 class LL1ParserTable:
@@ -329,9 +322,7 @@ class LL1ParserTable:
                 input_tokens[cursor] if cursor < len(input_tokens) else token_EOF
             )
             current_token, lexeme = (current_token.terminal, current_token.lexeme)
-            # print(
-            # f"Pilha: {[str(s) for s in stack[::-1]]} | Próximo token: {current_token}"
-            # )
+            # print(f"Pilha: {[str(s) for s in stack[::-1]]} | Próximo token: {current_token}")
 
             if isinstance(top, Terminal) or top == Grammar.EOF:
                 if top == current_token:
@@ -372,30 +363,33 @@ if __name__ == "__main__":
 
     # Definição da gramática
     productions = [
-        Production(S, [a, A, B, b]),
-        Production(A, [c]),
-        Production(A, [Grammar.EPSILON]),
-        Production(B, [d]),
-        Production(B, [Grammar.EPSILON]),
+        S >> [a, A, B, b],
+        A >> [c],
+        A >> [],
+        B >> [d],
+        B >> [],
     ]
+
     grammar = Grammar(
         start_symbol=S,
-        terminals=[a, b, c, d, Grammar.EOF],
+        terminals=[a, b, c, d],
         non_terminals=[S, A, B],
         productions=productions,
     )
-    print(Fore.YELLOW+ "Produções:")
+
+    print(Fore.YELLOW + "Produções:")
     for prod in grammar.productions:
         print(prod)
-    print(Fore.YELLOW+"\nTerminais da gramática:")
+
+    print(Fore.YELLOW + "\nTerminais da gramática:")
     print(grammar.terminals)
-    print(Fore.YELLOW+"Não terminais da gramática:")
+    print(Fore.YELLOW + "Não terminais da gramática:")
     print(grammar.non_terminals)
 
-    print(Fore.YELLOW+"\nConjuntos FIRST:")
+    print(Fore.YELLOW + "\nConjuntos FIRST:")
     for nt, first in grammar.first_sets.items():
         print(Fore.CYAN + f"{nt}:", Style.RESET_ALL, first)
-    print(Fore.YELLOW+"\nConjuntos FOLLOW:")
+    print(Fore.YELLOW + "\nConjuntos FOLLOW:")
     for nt, follow in grammar.follow_sets.items():
         print(Fore.CYAN + f"{nt}:", Style.RESET_ALL, follow)
 

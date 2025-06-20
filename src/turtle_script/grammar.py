@@ -1,7 +1,6 @@
-from colorama import Fore
 from table_parser_ll1 import Terminal
 from table_parser_ll1 import NonTerminal
-from table_parser_ll1 import Grammar, LL1Table, LL1ParserTable, Tokenizer
+from table_parser_ll1 import Grammar
 
 # --- TERMINAIS DA GRAMATICA ---
 

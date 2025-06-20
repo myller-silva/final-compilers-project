@@ -1,8 +1,6 @@
 from colorama import Fore
 from grammar import grammar
-from grammar import Terminal, NonTerminal
-from grammar import Tokenizer, LL1Table, LL1ParserTable
-
+from table_parser_ll1 import Terminal, NonTerminal, Tokenizer, LL1Table, LL1ParserTable
 
 if __name__ == "__main__":
     print("--------------")
@@ -24,10 +22,10 @@ if __name__ == "__main__":
         if rule.rhs == []:
             right = t_color + "ε"
         for sym in rule.rhs:
-            if isinstance(sym, Terminal):
-                right += t_color + f"{sym.repr} "
-            elif isinstance(sym, NonTerminal):
-                right += non_t_color + f"{sym} "
+            right += {
+                Terminal: t_color + f"{sym.repr} ",
+                NonTerminal: non_t_color + f"{sym} "
+            }[type(sym)]
         print(right)
 
     text = """
@@ -60,9 +58,8 @@ if __name__ == "__main__":
     parsed = ll1_parser_table.parse(tokens)
 
     print("-" * 30)
-
-    if parsed:
-        print(Fore.GREEN + "Análise sintática bem-sucedida!")
-    else:
-        print(Fore.RED + "Erro na análise sintática!")
+    print({
+        False: Fore.RED + "Erro na análise sintática!",
+        True: Fore.GREEN + "Análise sintática bem-sucedida!"
+    }[parsed])
     print("-" * 30)

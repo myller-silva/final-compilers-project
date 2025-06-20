@@ -246,7 +246,7 @@ class Tokenizer:
             tokens.append(Token(terminals.get(token_type), lexeme=lexeme))
         return tokens
 
-    @staticmethod  # TODO: talvez transferir esse método para a classe Grammar, ou criar uma classe diferente.
+    @staticmethod
     def _get_terminals(grammar: Grammar) -> dict[str, Terminal]:
         """Retorna um dicionário de terminais da gramática."""
         return {
@@ -256,7 +256,7 @@ class Tokenizer:
         }
 
 
-class LL1Table:  # TODO: LANCAR ERRO QUANDO TIVER UMA NOVA PRODUÇÃO PARA UMA CELULA JÁ PREENCHIDA
+class LL1Table:
     def __init__(self, grammar: Grammar):
         self.grammar = grammar
         self.table = self._build_table()
@@ -315,42 +315,32 @@ class LL1ParserTable:
         stack = [Grammar.EOF, self.start_symbol]
         input_tokens = tokens[:]
         cursor = 0
-        # print(f"\nIniciando parsing LL(1) para entrada: {tokens}")
         while stack:
             top = stack.pop()
-            current_token = (
-                input_tokens[cursor] if cursor < len(input_tokens) else token_EOF
-            )
-            current_token, lexeme = (current_token.terminal, current_token.lexeme)
-            # print(f"Pilha: {[str(s) for s in stack[::-1]]} | Próximo token: {current_token}")
+            current_token = input_tokens[cursor] if cursor < len(input_tokens) else token_EOF
 
             if isinstance(top, Terminal) or top == Grammar.EOF:
-                if top == current_token:
-                    # print(f"Consome token: {current_token}")
-                    cursor += 1
-                else:
-                    print(f"Erro: esperado {top}, encontrado {current_token}")
+                if top != current_token.terminal:
+                    print(f"Erro: esperado {top}, encontrado {current_token.terminal} (lexema: '{current_token.lexeme}')")
                     return False
+                cursor += 1
             elif isinstance(top, NonTerminal):
-                prod = self.table.get((top, current_token))
-                if prod:
-                    # print(f"Aplica produção: {prod}")
-                    rhs = prod.rhs
-                    if not (len(rhs) == 1 and rhs[0] == Grammar.EPSILON):
-                        for symbol in reversed(rhs):
-                            stack.append(symbol)
-                else:
-                    print(f"Erro: nenhuma produção para ({top}, {current_token})")
+                prod = self.table.get((top, current_token.terminal))
+                if not prod:
+                    print(f"Erro: nenhuma produção encontrada para ({top}, {current_token.terminal})")
                     return False
+                rhs = prod.rhs
+                if not (len(rhs) == 1 and rhs[0] == Grammar.EPSILON):
+                    for symbol in reversed(rhs):
+                        stack.append(symbol)
             else:
                 print(f"Erro: símbolo desconhecido na pilha: {top}")
                 return False
-        if cursor == len(input_tokens):
-            # print("Parsing bem-sucedido!")
-            return True
-        else:
-            # print("Erro: tokens restantes após esvaziar a pilha.")
+        
+        if cursor != len(input_tokens):
+            print(f"Erro: tokens restantes após esvaziar a pilha: {input_tokens[cursor:]}")
             return False
+        return True
 
 
 # ----------------------

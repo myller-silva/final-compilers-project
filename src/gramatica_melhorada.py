@@ -48,17 +48,17 @@ inteiro = Terminal("inteiro", r"\d+")
 texto = Terminal("texto", r'"[^"]*"')
 logico = Terminal("logico", r"\b(verdadeiro|falso)\b")
 
-op_mais = Terminal("op_mais", r"\+")
-op_menos = Terminal("op_menos", r"-")
-op_multiplicacao = Terminal("op_multiplicacao", r"\*")
-op_div = Terminal("op_div", r"/")
-op_igualdade = Terminal("op_igualdade", r"==")
-op_diferente = Terminal("op_diferente", r"!=")
-op_menor_ou_igual = Terminal("op_menor_ou_igual", r"<=")
-op_maior_ou_igual = Terminal("op_maior_ou_igual", r">=")
-op_menor_que = Terminal("op_menor_que", r"<")
-op_maior_que = Terminal("op_maior_que", r">")
-op_modulo = Terminal("op_modulo", r"%")
+op_mais = Terminal("op_mais", r"\+", repr="+")
+op_menos = Terminal("op_menos", r"-", repr="-")
+op_multiplicacao = Terminal("op_multiplicacao", r"\*", repr="*")
+op_div = Terminal("op_div", r"/", repr="/")
+op_igualdade = Terminal("op_igualdade", r"==", repr="==")
+op_diferente = Terminal("op_diferente", r"!=", repr="!=")
+op_menor_ou_igual = Terminal("op_menor_ou_igual", r"<=", repr="<=")
+op_maior_ou_igual = Terminal("op_maior_ou_igual", r">=", repr=">=")
+op_menor_que = Terminal("op_menor_que", r"<", repr="<")
+op_maior_que = Terminal("op_maior_que", r">", repr=">")
+op_modulo = Terminal("op_modulo", r"%", repr="%")
 
 # OPERADORES LOGICOS
 op_e = Terminal("op_e", r"&&")
@@ -155,39 +155,19 @@ Movimento = NonTerminal("Movimento")
 ControleCaneta = NonTerminal("ControleCaneta")
 ControleTela = NonTerminal("ControleTela")
 Tipo = NonTerminal("Tipo")
+
 Expr = NonTerminal("Expr")
-# GRAMATICA DE EXPRESSAO ARITIMETICA:
-# E -> T E'
-# E' -> + T E' | - T E' | ε
-# T -> F T'
-# T' -> * F T' | / F T' | ε
-# F -> NUM | ( E )
-
-ExprAritmetica = NonTerminal("ExprAritmetica")
-Term = NonTerminal("Term")
-Factor = NonTerminal("Factor")
-ExprAritmeticaR = NonTerminal("ExprAritmeticaR")
-TermR = NonTerminal("TermR")
-Num = NonTerminal("Num")
-
-# GRAMATICA DE EXPRESSAO LOGICA:
-# E  -> T E'
-# E' -> OR T E' | ε
-# T  -> F T'
-# T' -> AND F T' | ε
-# F  -> NOT F | C
-# C  -> P C'
-# C' -> == P | != P | < P | <= P | > P | >= P | ε
-# P  -> ( E ) | IDENTIFICADOR | VERDADEIRO | FALSO
-
-ExprLogica = NonTerminal("ExprLogica")
-TermLogico = NonTerminal("TermLogico")
-FactorLogico = NonTerminal("FactorLogico")
-Comparacao = NonTerminal("Comparacao")
-ExprLogicaR = NonTerminal("ExprLogicaR")
-TermLogicoR = NonTerminal("TermLogicoR")
-ComparacaoR = NonTerminal("ComparacaoR")
-Primitivo = NonTerminal("Primitivo")
+OrExpr = NonTerminal("OrExpr")
+OrExprTail = NonTerminal("OrExprTail")
+AndExpr = NonTerminal("AndExpr")
+AndExprTail = NonTerminal("AndExprTail")
+NotExpr = NonTerminal("NotExpr")
+AddExpr = NonTerminal("AddExpr")
+AddExprTail = NonTerminal("AddExprTail")
+MulExpr = NonTerminal("MulExpr")
+MulExprTail = NonTerminal("MulExprTail")
+UnaryExpr = NonTerminal("UnaryExpr")
+Primary = NonTerminal("Primary")
 
 non_terminals = [
     Programa,
@@ -209,36 +189,36 @@ non_terminals = [
     ControleTela,
     Tipo,
     Expr,
-    ExprAritmetica,
-    Term,
-    Factor,
-    ExprAritmeticaR,
-    TermR,
-    Num,
-    ExprLogica,
-    TermLogico,
-    FactorLogico,
-    Comparacao,
-    Primitivo,
-    ExprLogicaR,
-    TermLogicoR,
-    ComparacaoR,
-    Primitivo,
+    OrExpr,
+    OrExprTail,
+    AndExpr,
+    AndExprTail,
+    NotExpr,
+    AddExpr,
+    AddExprTail,
+    MulExpr,
+    MulExprTail,
+    # UnaryExpr,
+    Primary,
 ]
 
 # PRODUÇÕES DA GRAMATICA
 
 productions = [
     # --- Programa ---
-    Programa >> [Bloco],
     Programa >> [kw_inicio_bloco, Declaracoes, Comandos, kw_fim_bloco],
     # --- Declaracoes ---
     Declaracoes >> [DeclaracaoVariavel, Declaracoes],
     Declaracoes >> [],
     DeclaracaoVariavel >> [kw_var, Tipo, dois_pontos, Identificadores, ponto_virgula],
+    
     Identificadores >> [identificador, IdentificadoresR],
-    IdentificadoresR >> [virgula, Identificadores],
+    IdentificadoresR >> [virgula, identificador, Atribuicao, Primary, virgula, Primary],
     IdentificadoresR >> [],
+    Atribuicao >> [op_atribuicao],
+    Atribuicao >> [virgula, identificador, op_atribuicao, Primary, virgula],
+    
+    
     # Declarar variaveis tipo texto aqui tambem? por exemplo, text = "ola mundo";, ou deixar a declaracao de texto em qualquer parte do codigo? # TODO: perguntar ao professor
     # --- Tipo ---
     Tipo >> [kw_inteiro],
@@ -258,73 +238,61 @@ productions = [
     # --- Atribuicao ---
     Atribuicao >> [identificador, op_atribuicao, Expr, ponto_virgula],
     # --- Condicional (SE) ---
-    Condicional
-    >> [kw_se, ExprLogica, kw_entao, Comandos, Senao, kw_fim_se, ponto_virgula],
+    Condicional >> [kw_se, Expr, kw_entao, Comandos, Senao, kw_fim_se, ponto_virgula],
     Senao >> [kw_senao, Comandos],
-    Senao
-    >> [],  # senao pode ser opcional, ou seja, se nao tiver senao, o programa continua normalmente
+    Senao >> [],
     # --- LacoRepeticao ---
     LacoRepeticao >> [Repita],
     LacoRepeticao >> [Enquanto],
     # --- LacoRepeticao (Repita) ---
-    Repita
-    >> [kw_repita, ExprAritmetica, kw_vezes, Comandos, kw_fim_repita, ponto_virgula],
-    #  --- LacoRepeticao (Enquanto) ---
-    Enquanto
-    >> [kw_enquanto, ExprLogica, kw_faca, Comandos, kw_fim_enquanto, ponto_virgula],
+    Repita >> [kw_repita, Expr, kw_vezes, Comandos, kw_fim_repita, ponto_virgula],
+    # --- LacoRepeticao (Enquanto) ---
+    Enquanto >> [kw_enquanto, Expr, kw_faca, Comandos, kw_fim_enquanto, ponto_virgula],
     # --- Movimento ---
-    Movimento >> [cmd_avancar, ExprAritmetica, ponto_virgula],
-    Movimento >> [cmd_recuar, ExprAritmetica, ponto_virgula],
-    Movimento >> [cmd_girar_direita, ExprAritmetica, ponto_virgula],
-    Movimento >> [cmd_girar_esquerda, ExprAritmetica, ponto_virgula],
-    Movimento >> [cmd_ir_para, Expr, ExprAritmetica, ponto_virgula],
+    Movimento >> [cmd_avancar, Expr, ponto_virgula],
+    Movimento >> [cmd_recuar, Expr, ponto_virgula],
+    Movimento >> [cmd_girar_direita, Expr, ponto_virgula],
+    Movimento >> [cmd_girar_esquerda, Expr, ponto_virgula],
+    Movimento >> [cmd_ir_para, Expr, Expr, ponto_virgula],
     # --- Controle da caneta ---
     ControleCaneta >> [cmd_levantar_caneta, ponto_virgula],
     ControleCaneta >> [cmd_abaixar_caneta, ponto_virgula],
-    ControleCaneta >> [cmd_definir_cor, ExprAritmetica, ponto_virgula],
-    ControleCaneta >> [cmd_definir_espessura, ExprAritmetica, ponto_virgula],
+    ControleCaneta >> [cmd_definir_cor, Expr, ponto_virgula],
+    ControleCaneta >> [cmd_definir_espessura, Expr, ponto_virgula],
     # --- Controle de tela ---
     ControleTela >> [cmd_limpar_tela, ponto_virgula],
     ControleTela >> [cmd_cor_de_fundo, Expr, ponto_virgula],
     # --- Expressões --- (Aritméticas e Lógicas)
-    Expr >> [ExprAritmetica],
-    Expr >> [ExprLogica],
-    # --- Expr Aritmetica ---
-    ExprAritmetica >> [Term, ExprAritmeticaR],
-    ExprAritmeticaR >> [op_mais, Term, ExprAritmeticaR],
-    ExprAritmeticaR >> [op_menos, Term, ExprAritmeticaR],
-    ExprAritmeticaR >> [],
-    Term >> [Factor, TermR],
-    TermR >> [op_multiplicacao, Factor, TermR],
-    TermR >> [op_div, Factor, TermR],
-    TermR >> [op_modulo, Factor, TermR],  # TODO: verificar
-    TermR >> [],
-    Factor >> [Num],
-    Factor >> [abre_parenteses, ExprAritmetica, fecha_parenteses],
-    Num >> [inteiro],
-    Num >> [real],
-    Num >> [identificador],
-    # --- Expr Lógica ---
-    ExprLogica >> [TermLogico, ExprLogicaR],
-    ExprLogicaR >> [op_ou, TermLogico, ExprLogicaR],
-    ExprLogicaR >> [],
-    TermLogico >> [FactorLogico, TermLogicoR],
-    TermLogicoR >> [op_e, FactorLogico, TermLogicoR],
-    TermLogicoR >> [],
-    FactorLogico >> [op_nao, FactorLogico],
-    FactorLogico >> [Comparacao],
-    Comparacao >> [Primitivo, ComparacaoR],
-    ComparacaoR >> [op_igualdade, Primitivo],
-    ComparacaoR >> [op_diferente, Primitivo],
-    ComparacaoR >> [op_menor_ou_igual, Primitivo],
-    ComparacaoR >> [op_maior_ou_igual, Primitivo],
-    ComparacaoR >> [op_menor_que, Primitivo],
-    ComparacaoR >> [op_maior_que, Primitivo],
-    ComparacaoR >> [],
-    Primitivo >> [logico],
-    Primitivo >> [identificador],
-    Primitivo >> [abre_parenteses, ExprLogica, fecha_parenteses],
-    # Primitivo >> [ExprAritmetica],  # TODO: o primitivo de uma expressao o logica é uma expressao aritmetica, ou um idenficador, ou um logico
+    Expr >> [OrExpr],
+    OrExpr >> [AndExpr, OrExprTail],
+    OrExprTail >> [op_ou, AndExpr, OrExprTail],
+    OrExprTail >> [],
+    AndExpr >> [NotExpr, AndExprTail],
+    AndExprTail >> [op_e, NotExpr, AndExprTail],
+    AndExprTail >> [],
+    NotExpr >> [op_nao, NotExpr],
+    NotExpr >> [AddExpr],
+    AddExpr >> [MulExpr, AddExprTail],
+    AddExprTail >> [op_mais, MulExpr, AddExprTail],
+    AddExprTail >> [op_menos, MulExpr, AddExprTail],
+    AddExprTail >> [op_igualdade, MulExpr, AddExprTail],
+    AddExprTail >> [op_diferente, MulExpr, AddExprTail],
+    AddExprTail >> [op_menor_ou_igual, MulExpr, AddExprTail],
+    AddExprTail >> [op_maior_ou_igual, MulExpr, AddExprTail],
+    AddExprTail >> [op_menor_que, MulExpr, AddExprTail],
+    AddExprTail >> [op_maior_que, MulExpr, AddExprTail],
+    AddExprTail >> [],  # ε representado como lista vazia
+    MulExpr >> [Primary, MulExprTail],
+    MulExprTail >> [op_multiplicacao, Primary, MulExprTail],
+    MulExprTail >> [op_div, Primary, MulExprTail],
+    MulExprTail >> [op_modulo, Primary, MulExprTail],
+    MulExprTail >> [],
+    Primary >> [abre_parenteses, Expr, fecha_parenteses],
+    Primary >> [inteiro],
+    Primary >> [identificador],
+    Primary >> [real],
+    Primary >> [texto],
+    Primary >> [logico],
 ]
 
 # TODO: adicionar a opcao de atribuir valor diretamente na declaracao da variavel, por exemplo: var inteiro : contador = 0;
@@ -333,11 +301,18 @@ productions = [
 # ERROR: nenhuma producao para (Comandos, EOF)
 text = """
 inicio
-    var inteiro : passo;
-    se verdadeiro entao
-        avancar ((10+(10)));
+    var inteiro : a, b, c = 3, 1, a;
+    teste = "teste";
+    se 1 * ( verdadeiro  != falso + 12) entao
+        // negação
+        avancar ! verdadeiro;
+        avancar ! (verdadeiro);
+        avancar ! (verdadeiro || falso);
+        avancar ! (verdadeiro && falso);
+        avancar  (verdadeiro == 1);
+        
     senao
-        girar_direita 90;
+        girar_direita 10;
     fim_se;
 fim
 """
@@ -356,23 +331,6 @@ print("--------------")
 print(grammar)
 
 tokens = Tokenizer.tokenize(text, grammar)
-
-ll1_table = LL1Table(grammar)
-# ll1_table.print_table() # TODO: melhorar a impressao da tabela depois, talvez com dataframe pandas
-ll1_parser_table = LL1ParserTable(ll1_table, Programa)
-
-# ll1_parser_table.parse(tokens)
-parsed = ll1_parser_table.parse(tokens)
-print("-" * 30)
-
-if parsed:
-    print("Análise sintática bem-sucedida!")
-else:
-    print("--------------")
-    print("Erro na análise sintática!")
-    print("Tokens não reconhecidos ou gramática inválida.")
-print("-" * 30)
-
 from utils.text import colorize_text
 
 print(colorize_text("Tokens encontrados:", "red"))
@@ -381,3 +339,16 @@ for token in tokens:
         colorize_text(f"{token.terminal.name}", "blue"),
         colorize_text(f"{token.lexeme}", "yellow"),
     )
+
+
+ll1_table = LL1Table(grammar)
+ll1_parser_table = LL1ParserTable(ll1_table, Programa)
+parsed = ll1_parser_table.parse(tokens)
+
+print("-" * 30)
+
+if parsed:
+    print("Análise sintática bem-sucedida!")
+else:
+    print("Erro na análise sintática!")
+print("-" * 30)

@@ -6,11 +6,13 @@ init(autoreset=True)
 
 
 class Symbol:
-    def __init__(self, name: str):
+    def __init__(self, name: str, repr: str = None):
         self.name = name
+        self.repr = repr if repr is not None else name
 
     def __repr__(self):
-        return self.name
+        # return self.name
+        return f"{self.repr}"
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.name == other.name
@@ -34,8 +36,8 @@ class NonTerminal(Symbol):
 
 
 class Terminal(Symbol):
-    def __init__(self, name: str, regex: str = None):
-        super().__init__(name)
+    def __init__(self, name: str, regex: str = None, repr: str = None):
+        super().__init__(name, repr)
         # Por padrão, o regex é o próprio nome
         self.regex = regex if regex is not None else f"{name}"
 
@@ -257,15 +259,23 @@ class LL1Table:  # TODO: LANCAR ERRO QUANDO TIVER UMA NOVA PRODUÇÃO PARA UMA C
     def _build_table(self):
         # TODO: LANCAR ERRO QUANDO TIVER UMA NOVA PRODUÇÃO PARA UMA CELULA JÁ PREENCHIDA
         """Constrói a tabela LL(1) para a gramática fornecida."""
-        table = {}
+        table = dict()
         for prod in self.grammar.productions:
             lhs, rhs = prod.lhs, prod.rhs
             first_of_rhs = self.grammar.first_rhs(rhs)
             for terminal in first_of_rhs:
                 if terminal != Grammar.EPSILON:
+                    if (lhs, terminal) in table:
+                        raise ValueError(
+                            f"Erro: célula ({lhs}, {terminal}) já preenchida com {table[(lhs, terminal)]} ao tentar inserir {prod}."
+                        )
                     table[(lhs, terminal)] = prod
             if Grammar.EPSILON in first_of_rhs:
                 for terminal in self.grammar.follow_sets[lhs]:
+                    if (lhs, terminal) in table:
+                        raise ValueError(
+                            f"Erro: célula ({lhs}, {terminal}) já preenchida com {table[(lhs, terminal)]} ao tentar inserir {prod}."
+                        )
                     table[(lhs, terminal)] = prod
         return table
 
@@ -287,6 +297,14 @@ class LL1Table:  # TODO: LANCAR ERRO QUANDO TIVER UMA NOVA PRODUÇÃO PARA UMA C
                     cell = f"{Fore.RED}{'':>20}{Style.RESET_ALL}"
                 row += cell
             print(row)
+    
+    def to_dataframe(self):
+        import pandas as pd
+        df = pd.DataFrame.from_dict(self.table, orient="index")
+        df.index = pd.MultiIndex.from_tuples(df.index, names=['NonTerminal', 'Terminal'])
+        df = df.unstack()
+        return df 
+        
 
 
 class LL1ParserTable:
@@ -320,7 +338,7 @@ class LL1ParserTable:
                     # print(f"Consome token: {current_token}")
                     cursor += 1
                 else:
-                    # print(f"Erro: esperado {top}, encontrado {current_token}")
+                    print(f"Erro: esperado {top}, encontrado {current_token}")
                     return False
             elif isinstance(top, NonTerminal):
                 prod = self.table.get((top, current_token))
@@ -331,10 +349,10 @@ class LL1ParserTable:
                         for symbol in reversed(rhs):
                             stack.append(symbol)
                 else:
-                    # print(f"Erro: nenhuma produção para ({top}, {current_token})")
+                    print(f"Erro: nenhuma produção para ({top}, {current_token})")
                     return False
             else:
-                # print(f"Erro: símbolo desconhecido na pilha: {top}")
+                print(f"Erro: símbolo desconhecido na pilha: {top}")
                 return False
         if cursor == len(input_tokens):
             # print("Parsing bem-sucedido!")
@@ -383,10 +401,16 @@ if __name__ == "__main__":
         print(f"{nt}: {follow}")
 
     ll1_table = LL1Table(grammar)
-    print("\nTabela LL(1):")
-    ll1_table.print_table()
+    df = ll1_table.to_dataframe()
+    print("\nTabela LL(1) como DataFrame:")
+    print(df)
 
     tokens = Tokenizer.tokenize("acdb", grammar)
     parser = LL1ParserTable(ll1_table, S)
     print("\nTestando parsing LL(1):")
-    parser.parse(tokens)
+    parsed = parser.parse(tokens)
+    if parsed:
+        print("ACEITA.")
+    else:
+        print("REJEITADA.")
+    

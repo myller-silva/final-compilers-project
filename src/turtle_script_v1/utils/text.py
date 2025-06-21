@@ -28,6 +28,3 @@ init(autoreset=True)
 
 def colorize_text(text: str, color_code: str = Fore.RESET) -> str:
     return color_code + text + Style.RESET_ALL
-
-print(colorize_text("Hello, World!", Fore.GREEN))
-print(colorize_text("This is a test message.", Fore.YELLOW))

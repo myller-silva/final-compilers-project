@@ -125,11 +125,14 @@ Programa = NonTerminal("Programa")
 Bloco = NonTerminal("Bloco")
 Declaracoes = NonTerminal("Declaracoes")
 DeclaracaoVariavel = NonTerminal("DeclaracaoVariavel")
+AtribuirVariavel = NonTerminal("AtribuirVariavel")
 Identificadores = NonTerminal("Identificadores")
 IdentificadoresR = NonTerminal("IdentificadoresR")
+AtribuicaoIdentificadores = NonTerminal("AtribuicaoIdentificadores")
+AtribuicaoIdentificadoresR = NonTerminal("AtribuicaoIdentificadoresR")
 Comandos = NonTerminal("Comandos")
 Comando = NonTerminal("Comando")
-Atribuicao = NonTerminal("Atribuicao")
+AtribuirValor = NonTerminal("AtribuirValor")
 Condicional = NonTerminal("Condicional")
 Senao = NonTerminal("Senao")
 LacoRepeticao = NonTerminal("LacoRepeticao")
@@ -153,16 +156,20 @@ MulExprTail = NonTerminal("MulExprTail")
 UnaryExpr = NonTerminal("UnaryExpr")
 Primary = NonTerminal("Primary")
 
+
 non_terminals = [
     Programa,
     Bloco,
     Declaracoes,
     DeclaracaoVariavel,
+    AtribuirVariavel,
     Identificadores,
     IdentificadoresR,
+    AtribuicaoIdentificadores,
+    AtribuicaoIdentificadoresR,
     Comandos,
     Comando,
-    Atribuicao,
+    AtribuirValor,
     Condicional,
     Senao,
     LacoRepeticao,
@@ -192,12 +199,15 @@ productions = [
     # --- Declaracoes ---
     Declaracoes >> [DeclaracaoVariavel, Declaracoes],
     Declaracoes >> [],
-    DeclaracaoVariavel >> [kw_var, Tipo, dois_pontos, Identificadores, ponto_virgula],
+    DeclaracaoVariavel >> [kw_var, Tipo, AtribuirVariavel, ponto_virgula],
+    AtribuirVariavel >> [dois_pontos, Identificadores, AtribuicaoIdentificadores],
     Identificadores >> [identificador, IdentificadoresR],
-    IdentificadoresR >> [virgula, identificador, Atribuicao, Primary, virgula, Primary],
+    IdentificadoresR >> [virgula, identificador, IdentificadoresR],
     IdentificadoresR >> [],
-    Atribuicao >> [op_atribuicao],
-    Atribuicao >> [virgula, identificador, op_atribuicao, Primary, virgula],
+    AtribuicaoIdentificadores >> [op_atribuicao, Expr, AtribuicaoIdentificadoresR],
+    AtribuicaoIdentificadores >> [],
+    AtribuicaoIdentificadoresR >> [virgula, Expr, AtribuicaoIdentificadoresR],
+    AtribuicaoIdentificadoresR >> [],
     # --- Tipo ---
     Tipo >> [kw_inteiro],
     Tipo >> [kw_real],
@@ -207,14 +217,14 @@ productions = [
     Comandos >> [Comando, Comandos],
     Comandos >> [],
     # --- Comando ---
-    Comando >> [Atribuicao],
+    Comando >> [AtribuirValor],
     Comando >> [Condicional],
     Comando >> [LacoRepeticao],
     Comando >> [Movimento],
     Comando >> [ControleCaneta],
     Comando >> [ControleTela],
     # --- Atribuicao ---
-    Atribuicao >> [identificador, op_atribuicao, Expr, ponto_virgula],
+    AtribuirValor >> [identificador, op_atribuicao, Expr, ponto_virgula],
     # --- Condicional (SE) ---
     Condicional >> [kw_se, Expr, kw_entao, Comandos, Senao, kw_fim_se, ponto_virgula],
     Senao >> [kw_senao, Comandos],

@@ -117,10 +117,10 @@ class BaseGrammarTest(unittest.TestCase):
         ]
         self.non_terminals = [self.E, self.X, self.T, self.Y, self.F]
         self.start_symbol = self.E
-        self.plus = Terminal("plus", r"\+")
-        self.dot = Terminal("dot", r"\*")
-        self.left_p = Terminal("left_paren", r"\(")
-        self.right_p = Terminal("right_paren", r"\)")
+        self.plus = Terminal("plus", r"\+", repr="+")
+        self.dot = Terminal("dot", r"\*", repr="*")
+        self.left_p = Terminal("left_paren", r"\(", repr="(")
+        self.right_p = Terminal("right_paren", r"\)", repr=")")
         self.iden = Terminal("id", r"[a-zA-Z_][a-zA-Z0-9_]*")
         self.terminals = [
             self.plus,
@@ -174,11 +174,11 @@ class TestGrammar(BaseGrammarTest):
 
     def test_follow_sets(self):
         """Testa os conjuntos FOLLOW da gramática."""
-        follow_E = self.grammar.follow_sets[self.E] # E: {EOF, )},
-        follow_F = self.grammar.follow_sets[self.F] # F: {*, +, EOF, )},
-        follow_Y = self.grammar.follow_sets[self.Y] # Y: {+, EOF, )},
-        follow_T = self.grammar.follow_sets[self.T] # T: {+, EOF, )},
-        follow_X = self.grammar.follow_sets[self.X] # X: {EOF, )}
+        follow_E = self.grammar.follow_sets[self.E]  # E: {EOF, )},
+        follow_F = self.grammar.follow_sets[self.F]  # F: {*, +, EOF, )},
+        follow_Y = self.grammar.follow_sets[self.Y]  # Y: {+, EOF, )},
+        follow_T = self.grammar.follow_sets[self.T]  # T: {+, EOF, )},
+        follow_X = self.grammar.follow_sets[self.X]  # X: {EOF, )}
 
         follow_E_expected = {Grammar.EOF, self.right_p}
         follow_F_expected = {self.dot, self.plus, Grammar.EOF, self.right_p}
@@ -274,8 +274,9 @@ class TestLL1ParserTable(BaseGrammarTest):
         for case in valid_cases:
             with self.subTest(case=case):
                 tokens = Tokenizer.tokenize(case, self.grammar)
-                result = self.parser.parse(tokens)
-                self.assertTrue(result)
+                parsed, ast_prods = self.parser.parse(tokens)
+                # Verifica se a análise foi bem-sucedida
+                self.assertTrue(parsed)
 
     def test_parse_invalid(self):
         invalid_cases = [
@@ -289,8 +290,8 @@ class TestLL1ParserTable(BaseGrammarTest):
         for case in invalid_cases:
             with self.subTest(case=case):
                 tokens = Tokenizer.tokenize(case, self.grammar)
-                result = self.parser.parse(tokens)
-                self.assertFalse(result)
+                parsed, _ = self.parser.parse(tokens)
+                self.assertFalse(parsed)
 
 
 if __name__ == "__main__":

@@ -306,8 +306,14 @@ class LL1ParserTable:
         self.table = table.table
         self.start_symbol = start_symbol
 
-    def parse(self, tokens: list[Token]):
-        """Realiza o parsing LL(1) para a lista de tokens fornecida e retorna a árvore sintática (AST) usando anytree."""
+    def parse(self, tokens: list[Token]) -> tuple[bool, list[Production]]:
+        """
+        Realiza o parsing LL(1) para a lista de tokens fornecida e retorna 
+        um booleano indicando se a análise foi bem-sucedida e uma lista de produções utilizadas
+        no processo de parsing.
+        Se a análise falhar, retorna False e a lista de produções até o ponto de falha.
+        Se a análise for bem-sucedida, retorna True e a lista completa de produções.
+        """
         token_EOF = Token(Grammar.EOF, "$")
         if not tokens or tokens[-1].terminal != Grammar.EOF:
             tokens.append(token_EOF)  # Adiciona o token EOF
@@ -342,9 +348,11 @@ class LL1ParserTable:
         return True, prods
 
     @staticmethod
-    def build_ast(productions):
-        # TODO: criar apenas arvores sintaticas validas ?
-        """Constrói a árvore sintática abstrata (AST) com base nas produções utilizadas."""
+    def build_derivation_tree(productions): 
+        # TODO: As producoes nao tem informação do lexema, modificar no parser
+        # TODO: Adicionar o valor do Node como o lexema do token
+        # TODO: Exemplo: Node("CMD_AVANCAR", parent=parent, value="avancar"); # parent é o nó pai(Comando, por exemplo)
+        """Constrói a árvore de derivação com base nas produções utilizadas."""
         non_terminal_nodes = {}
         root = Node(productions[0].lhs)
         non_terminal_nodes[productions[0].lhs] = root
@@ -437,14 +445,13 @@ if __name__ == "__main__":
         print(Fore.CYAN + " Parsing ".center(50, "-"))
         parser = LL1ParserTable(ll1_table, S)
         parsed, ast_prods = parser.parse(tokens)
-        
-        ast = LL1ParserTable.build_ast(ast_prods)
-        
-        print(Fore.BLUE + "\nÁrvore Sintática Abstrata (AST):")
-        for pre, _, node in RenderTree(ast):
+
+        derivation_tree = LL1ParserTable.build_derivation_tree(ast_prods)
+        print(Fore.BLUE + "\nÁrvore de Derivação:")
+        for pre, _, node in RenderTree(derivation_tree):
             node:Node
             print(f"{pre}{node.name}")
-        
+
         print(Fore.BLUE + "\nProduções utilizadas no parsing:")
         for prod in ast_prods:
             print(prod)

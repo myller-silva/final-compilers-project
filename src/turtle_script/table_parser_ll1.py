@@ -393,44 +393,64 @@ if __name__ == "__main__":
         non_terminals=[S, A, B],
         productions=productions,
     )
+    print(Fore.YELLOW + " Gramática ".center(50, "="))
 
-    print(Fore.YELLOW + "Produções:")
+    print(Fore.BLUE + "Produções:")
     for prod in grammar.productions:
         print(prod)
 
-    print(Fore.YELLOW + "\nTerminais da gramática:")
+    print(Fore.BLUE + "\nTerminais da gramática:")
     print(grammar.terminals)
-    print(Fore.YELLOW + "Não terminais da gramática:")
+    print(Fore.BLUE + "Não terminais da gramática:")
     print(grammar.non_terminals)
+    
+    print(Fore.YELLOW + " Conjuntos FIRST e FOLLOW ".center(50, "="))
 
-    print(Fore.YELLOW + "\nConjuntos FIRST:")
+    print(Fore.BLUE + "Conjuntos FIRST:")
     for nt, first in grammar.first_sets.items():
         print(Fore.CYAN + f"{nt}:", Style.RESET_ALL, first)
-    print(Fore.YELLOW + "\nConjuntos FOLLOW:")
+    print(Fore.BLUE + "Conjuntos FOLLOW:")
     for nt, follow in grammar.follow_sets.items():
         print(Fore.CYAN + f"{nt}:", Style.RESET_ALL, follow)
-
+    
+    print(Fore.YELLOW + " Tabela LL(1) ".center(50, "="))
     ll1_table = LL1Table(grammar)
     df = ll1_table.to_dataframe()
-    print(Fore.YELLOW + "\nTabela LL(1) como DataFrame:")
     print(df)
-    text = "abc"
-    tokens = Tokenizer.tokenize(text, grammar)
-    parser = LL1ParserTable(ll1_table, S)
-    print(Fore.YELLOW + "\nTestando parsing LL(1):")
-    parsed, ast_prods = parser.parse(tokens)
-    if parsed:
-        print(Fore.GREEN + "ACEITA." + Style.RESET_ALL)
-    else:
-        print(Fore.RED + "REJEITADA." + Style.RESET_ALL)
-    print(parsed)
 
-    print(Fore.YELLOW + "\nProduções utilizadas no parsing:")
-    for prod in ast_prods:
-        print(prod)
+    print('\n'+Fore.YELLOW + " Exemplos ".center(50, "="))
+    print("\n" + Fore.YELLOW+"-" * 50)
+    texts = [
+        "ab",
+        "abc",
+        "acb",
+        
+    ]
+    for text in texts:
+        tokens = Tokenizer.tokenize(text, grammar)
+        print( f"Texto: {Fore.GREEN}'{text}'")
+        print(Fore.CYAN + " Tokens ".center(50, "-"))
+        print(f"{Fore.BLUE}{'Terminal':<30} Lexema")
+        for token in tokens:
+            print(f"{token.terminal.name:<30} {token.lexeme}")
 
-    ast = LL1ParserTable.build_ast(ast_prods)
-    print(Fore.YELLOW + "\nÁrvore Sintática Abstrata (AST):")
-    for pre, _, node in RenderTree(ast):
-        node:Node
-        print(f"{pre}{node.name}")
+        print(Fore.CYAN + " Parsing ".center(50, "-"))
+        parser = LL1ParserTable(ll1_table, S)
+        parsed, ast_prods = parser.parse(tokens)
+        
+        ast = LL1ParserTable.build_ast(ast_prods)
+        
+        print(Fore.BLUE + "\nÁrvore Sintática Abstrata (AST):")
+        for pre, _, node in RenderTree(ast):
+            node:Node
+            print(f"{pre}{node.name}")
+        
+        print(Fore.BLUE + "\nProduções utilizadas no parsing:")
+        for prod in ast_prods:
+            print(prod)
+
+        print(Fore.BLUE+"Resultado: "+{
+            True: Fore.GREEN + "ACEITA",
+            False: Fore.RED + "REJEITADA"
+        }[parsed])
+        print("\n" + Fore.YELLOW+"-" * 50)

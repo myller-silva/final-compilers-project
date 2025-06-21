@@ -312,7 +312,6 @@ class LL1ParserTable:
         um booleano indicando se a análise foi bem-sucedida e uma lista de produções utilizadas
         no processo de parsing.
         Se a análise falhar, retorna False e a lista de produções até o ponto de falha.
-        Se a análise for bem-sucedida, retorna True e a lista completa de produções.
         """
         token_EOF = Token(Grammar.EOF, "$")
         if not tokens or tokens[-1].terminal != Grammar.EOF:
@@ -432,7 +431,6 @@ if __name__ == "__main__":
         "ab",
         "abc",
         "acb",
-        
     ]
     for text in texts:
         tokens = Tokenizer.tokenize(text, grammar)

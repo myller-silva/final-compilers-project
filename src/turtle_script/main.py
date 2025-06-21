@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     ll1_table = LL1Table(grammar)
     ll1_parser_table = LL1ParserTable(ll1_table, grammar.start_symbol)
-    parsed = ll1_parser_table.parse(tokens)
+    parsed, parsed_productions = ll1_parser_table.parse(tokens)
 
     print("-" * 30)
     print({

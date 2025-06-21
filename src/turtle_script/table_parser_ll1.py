@@ -2,6 +2,7 @@ import re
 import pandas as pd
 from collections import defaultdict
 from colorama import Fore, Style, init
+from anytree import Node, RenderTree
 
 
 init(autoreset=True)
@@ -306,8 +307,7 @@ class LL1ParserTable:
         self.start_symbol = start_symbol
 
     def parse(self, tokens: list[Token]):
-        """Realiza o parsing LL(1) para a lista de tokens fornecida."""
-        # TODO: CRIAR ARVORE SINTATICA ABSTRATA (AST)
+        """Realiza o parsing LL(1) para a lista de tokens fornecida e retorna a árvore sintática (AST) usando anytree."""
         token_EOF = Token(Grammar.EOF, "$")
         if not tokens or tokens[-1].terminal != Grammar.EOF:
             tokens.append(token_EOF)  # Adiciona o token EOF
@@ -315,32 +315,59 @@ class LL1ParserTable:
         stack = [Grammar.EOF, self.start_symbol]
         input_tokens = tokens[:]
         cursor = 0
+        prods = []
         while stack:
             top = stack.pop()
             current_token = input_tokens[cursor] if cursor < len(input_tokens) else token_EOF
 
             if isinstance(top, Terminal) or top == Grammar.EOF:
                 if top != current_token.terminal:
-                    print(f"Erro: esperado {top}, encontrado {current_token.terminal} (lexema: '{current_token.lexeme}')")
-                    return False
-                cursor += 1
+                    return False, prods
+                cursor += 1 # Avança o cursor para o próximo token
             elif isinstance(top, NonTerminal):
                 prod = self.table.get((top, current_token.terminal))
                 if not prod:
-                    print(f"Erro: nenhuma produção encontrada para ({top}, {current_token.terminal})")
-                    return False
+                    return False, prods
                 rhs = prod.rhs
+                prods.append(prod)
                 if not (len(rhs) == 1 and rhs[0] == Grammar.EPSILON):
                     for symbol in reversed(rhs):
                         stack.append(symbol)
             else:
-                print(f"Erro: símbolo desconhecido na pilha: {top}")
-                return False
-        
+                return False, prods
+
         if cursor != len(input_tokens):
-            print(f"Erro: tokens restantes após esvaziar a pilha: {input_tokens[cursor:]}")
-            return False
-        return True
+            return False, prods
+
+        return True, prods
+
+    @staticmethod
+    def build_ast(productions):
+        # TODO: criar apenas arvores sintaticas validas ?
+        """Constrói a árvore sintática abstrata (AST) com base nas produções utilizadas."""
+        non_terminal_nodes = {}
+        root = Node(productions[0].lhs)
+        non_terminal_nodes[productions[0].lhs] = root
+        for prod in productions:
+            lhs_node = non_terminal_nodes.get(prod.lhs)
+            if not lhs_node:
+                lhs_node = Node(prod.lhs)
+                non_terminal_nodes[prod.lhs] = lhs_node
+            for symbol in prod.rhs:
+                child_node = Node(symbol, parent=lhs_node)
+                if isinstance(symbol, NonTerminal):
+                    non_terminal_nodes[symbol] = child_node
+        return root
+
+    @staticmethod
+    def print_ast(ast: Node):
+        """Imprime a árvore sintática abstrata (AST) de forma legível."""
+        for pre, _, node in RenderTree(ast):
+            node: Node
+            print(_)
+            print(f"{pre}{node.name}")
+
+
 
 
 # ----------------------
@@ -355,9 +382,9 @@ if __name__ == "__main__":
     productions = [
         S >> [a, A, B, b],
         A >> [c],
-        A >> [],
+        A >> [Grammar.EPSILON],
         B >> [d],
-        B >> [],
+        B >> [Grammar.EPSILON],
     ]
 
     grammar = Grammar(
@@ -387,12 +414,23 @@ if __name__ == "__main__":
     df = ll1_table.to_dataframe()
     print(Fore.YELLOW + "\nTabela LL(1) como DataFrame:")
     print(df)
-
-    tokens = Tokenizer.tokenize("acdb", grammar)
+    text = "abc"
+    tokens = Tokenizer.tokenize(text, grammar)
     parser = LL1ParserTable(ll1_table, S)
     print(Fore.YELLOW + "\nTestando parsing LL(1):")
-    parsed = parser.parse(tokens)
+    parsed, ast_prods = parser.parse(tokens)
     if parsed:
         print(Fore.GREEN + "ACEITA." + Style.RESET_ALL)
     else:
         print(Fore.RED + "REJEITADA." + Style.RESET_ALL)
+    print(parsed)
+
+    print(Fore.YELLOW + "\nProduções utilizadas no parsing:")
+    for prod in ast_prods:
+        print(prod)
+
+    ast = LL1ParserTable.build_ast(ast_prods)
+    print(Fore.YELLOW + "\nÁrvore Sintática Abstrata (AST):")
+    for pre, _, node in RenderTree(ast):
+        node:Node
+        print(f"{pre}{node.name}")

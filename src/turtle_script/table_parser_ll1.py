@@ -273,7 +273,7 @@ class LL1Table:
         table = dict()
 
         def raise_error(lhs, terminal, prod):
-            error = f"Erro: célula ({lhs}, {terminal}) já preenchida com {table[(lhs, terminal)]} ao tentar inserir {prod}."
+            error = f"Erro: célula '({lhs}, {terminal})' já preenchida com '{table[(lhs, terminal)]}' ao tentar inserir '{prod}'."
             raise ValueError(error)
 
         for prod in self.grammar.productions:

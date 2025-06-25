@@ -1,5 +1,5 @@
 import re
-import pandas as pd
+# import pandas as pd
 from collections import defaultdict
 from colorama import Fore, Style, init
 from anytree import Node, RenderTree
@@ -291,14 +291,14 @@ class LL1Table:
                     table[(lhs, terminal)] = prod
         return table
 
-    def to_dataframe(self):
-        """Converte a tabela LL(1) em um DataFrame do pandas."""
-        df = pd.DataFrame.from_dict(self.table, orient="index")
-        df.index = pd.MultiIndex.from_tuples(
-            df.index, names=["NonTerminal", "Terminal"]
-        )
-        df = df.unstack()
-        return df
+    # def to_dataframe(self):
+    #     """Converte a tabela LL(1) em um DataFrame do pandas."""
+    #     df = pd.DataFrame.from_dict(self.table, orient="index")
+    #     df.index = pd.MultiIndex.from_tuples(
+    #         df.index, names=["NonTerminal", "Terminal"]
+    #     )
+    #     df = df.unstack()
+    #     return df
 
 
 class LL1ParserTable:
@@ -422,8 +422,8 @@ if __name__ == "__main__":
     
     print(Fore.YELLOW + " Tabela LL(1) ".center(50, "="))
     ll1_table = LL1Table(grammar)
-    df = ll1_table.to_dataframe()
-    print(df)
+    # df = ll1_table.to_dataframe()
+    # print(df)
 
     print('\n'+Fore.YELLOW + " Exemplos ".center(50, "="))
     print("\n" + Fore.YELLOW+"-" * 50)

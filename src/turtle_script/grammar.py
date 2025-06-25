@@ -122,7 +122,6 @@ terminals = [
 # --- NAO TERMINAIS DA GRAMATICA ---
 
 Programa = NonTerminal("Programa")
-Bloco = NonTerminal("Bloco")
 Declaracoes = NonTerminal("Declaracoes")
 DeclaracaoVariavel = NonTerminal("DeclaracaoVariavel")
 AtribuirVariavel = NonTerminal("AtribuirVariavel")
@@ -159,7 +158,6 @@ Primary = NonTerminal("Primary")
 
 non_terminals = [
     Programa,
-    Bloco,
     Declaracoes,
     DeclaracaoVariavel,
     AtribuirVariavel,

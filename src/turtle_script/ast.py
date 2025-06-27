@@ -51,6 +51,9 @@ def process_children_with_op(name: object, children: list[Node], op: Node) -> No
         return None
     return op, processed_children
 
+def get_ast_root(derivation_tree_root: Node) -> Node:
+    """Obtém a árvore sintática abstrata (AST) a partir da raiz da árvore de derivação."""
+    return f_program(derivation_tree_root)
 
 def f_program(root: Node) -> Node:
     """Processa o programa, que é o nó raiz da árvore de derivação."""
@@ -330,114 +333,97 @@ def f_primary(root: Node) -> Node:
     return f_expr(expr)
 
 
-# INPUT 1
-# text = """
-# inicio
-#     // Desenha as quatro arestas do quadrado
-#     avancar 150;
-#     girar_direita 90;
-#     avancar 150;
-#     girar_direita 90;
-#     avancar 150;
-#     girar_direita 90;
-#     avancar 150;
-#     girar_direita 90;
-# fim
-# """
-
-# INPUT 2
-# text = """
-# inicio
-#     var inteiro : tamanho_lado ;
-#     tamanho_lado = 200;
-
-#     // Desenha uma estrela de 5 pontas
-#     avancar tamanho_lado ;
-#     girar_direita 144;
-
-#     avancar tamanho_lado ;
-#     girar_direita 144;
-
-#     avancar tamanho_lado ;
-#     girar_direita 144;
-
-#     avancar tamanho_lado ;
-#     girar_direita 144;
-
-#     avancar tamanho_lado ;
-#     girar_direita 144;
-# fim
-# """
-
-# INPUT 3
-# text = """
-# inicio
-#     var inteiro : lado ;
-#     var texto : cor ;
-
-#     lado = 5;
-#     cor_de_fundo "black";
-#     definir_espessura 2;
-
-#     repita 50 vezes
-#         // Muda a cor da linha a cada iteracao
-#         definir_cor "cyan";
-
-#         // Desenha e aumenta o lado
-#         avancar lado ;
-#         girar_direita 90;
-#         lado = lado + 5;
-#     fim_repita;
-# fim
-# """
-
-text = """
-inicio
-    resultado = verdadeiro || falso || falso;
-    definir_espessura 5 + 12 && 45;
-    ir_para 10 20;
-fim
-"""
-
-
-# Tabela LL(1)
-ll1_table = LL1Table(grammar=grammar)
-
-# Parser LL(1)
-parser = LL1ParserTable(table=ll1_table, start_symbol=grammar.start_symbol)
-
-# Tokenização
-tokens = Tokenizer.tokenize(text, grammar=grammar)
-
-# Derivação
-parsed, derivation_tree_root = parser.parse(tokens)
-root_copy = deepcopy(derivation_tree_root)
-
-# print("ÁRVORE DE DERIVAÇÃO(antes):")
-# for pre, fill, node in RenderTree(derivation_tree_root):
-#     print(
-#         f"{pre}"
-#         + {
-#             True: Fore.YELLOW + f"{node.name}" + Fore.RESET,
-#             False: Fore.BLACK + f"{node.name}" + Fore.RESET,
-#         }[node.is_leaf]
-#     )
-
-print(
-    {
-        True: Fore.GREEN + "Análise sintática bem-sucedida!" + Fore.RESET,
-        False: Fore.RED + "Erro na análise sintática." + Fore.RESET,
-    }[parsed]
-)
-
-print("Árvore sintática abstrata:")
-root_copy = deepcopy(derivation_tree_root)
-ast_root = f_program(derivation_tree_root)
-for pre, fill, node in RenderTree(ast_root):
-    print(
-        f"{pre}"
-        + {
-            True: Fore.BLUE + f"{node.name}" + Fore.RESET,
-            False: Fore.BLACK + f"{node.name}" + Fore.RESET,
-        }[node.is_leaf]
+if __name__ == "__main__":
+    script_samples = []
+    # INPUT 1
+    script_samples.append(
+        """
+    inicio
+        // Desenha as quatro arestas do quadrado
+        avancar 150;
+        girar_direita 90;
+        avancar 150;
+        girar_direita 90;
+        avancar 150;
+        girar_direita 90;
+        avancar 150;
+        girar_direita 90;
+    fim
+    """
     )
+
+    # INPUT 2
+    script_samples.append(
+        """
+    inicio
+        var inteiro : tamanho_lado ;
+        tamanho_lado = 200;
+
+        // Desenha uma estrela de 5 pontas
+        avancar tamanho_lado ;
+        girar_direita 144;
+
+        avancar tamanho_lado ;
+        girar_direita 144;
+
+        avancar tamanho_lado ;
+        girar_direita 144;
+
+        avancar tamanho_lado ;
+        girar_direita 144;
+
+        avancar tamanho_lado ;
+        girar_direita 144;
+    fim
+    """
+    )
+
+    # INPUT 3
+    script_samples.append(
+        """
+    inicio
+        var inteiro : lado ;
+        var texto : cor ;
+
+        lado = 5;
+        cor_de_fundo "black";
+        definir_espessura 2;
+
+        repita 50 vezes
+            // Muda a cor da linha a cada iteracao
+            definir_cor "cyan";
+
+            // Desenha e aumenta o lado
+            avancar lado ;
+            girar_direita 90;
+            lado = lado + 5;
+        fim_repita;
+    fim
+    """
+    )
+    # Tabela LL(1)
+    ll1_table = LL1Table(grammar=grammar)
+    # Parser LL(1)
+    parser = LL1ParserTable(table=ll1_table, start_symbol=grammar.start_symbol)
+
+    for script_input in script_samples:
+        print(Fore.YELLOW + "=" * 50 + Fore.RESET)
+        # Tokenização
+        tokens = Tokenizer.tokenize(script_input, grammar=grammar)
+        # Parsing
+        parsed, derivation_tree_root = parser.parse(tokens)
+        if not parsed:
+            print(Fore.RED + "Erro na análise sintática." + Fore.RESET)
+            continue
+        else:
+            print(Fore.GREEN + "Análise sintática bem-sucedida!" + Fore.RESET)
+        
+        print("AST:")
+        ast_root = get_ast_root(derivation_tree_root)
+        for pre, fill, node in RenderTree(ast_root):
+            print(
+                f"{pre}"
+                + {True: Fore.BLUE, False: Fore.BLACK}[node.is_leaf]
+                + f"{node.name}"
+                + Fore.RESET
+            )

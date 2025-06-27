@@ -1,20 +1,20 @@
 from grammar import *
-from table_parser_ll1 import (
-    LL1Table,
-    LL1ParserTable,
-    Tokenizer,
-    Production,
-    Terminal,
-    NonTerminal,
-)
+from table_parser_ll1 import LL1Table, LL1ParserTable, Tokenizer
 from colorama import Fore
-from anytree import RenderTree, Node, PreOrderIter
+from anytree import RenderTree, Node
 from copy import deepcopy
 from itertools import chain
 
 
+# TODO: fazer uma funcao base generica para fazer isso:
+# idR = f_identifiersR(idR)
+# if not idR:
+#     return [id]
+# return [id] + idR
+
+
 def is_empty(node: Node) -> bool:
-    """Check if a node is empty (has no children or is epsilon)."""
+    """Verifica se um nó é vazio (não possui filhos ou é epsilon)."""
     return len(node.children) == 0 or node.children[0] == Grammar.EPSILON
 
 
@@ -31,382 +31,306 @@ def flatten(items):
     return [item for item in items if item is not None]
 
 
-def f_programa(root: Node) -> Node:
-    _, declaracoes, comandos, _ = root.children
-    declaracoes = f_declaracoes(declaracoes)
-    comandos = f_comandos(comandos)
-    children = []
-    if declaracoes:
-        children.append(declaracoes)
-    if comandos:
-        children.append(comandos)
+def process_children(name: object, children: list[Node]) -> Node:
+    """Processa os filhos de um nó e retorna um novo nó com base no número de filhos."""
     children = flatten(children)
     if len(children) == 0:
         return None
     if len(children) == 1:
         return children[0]
-    return Node(root.name, children=children)
+    return Node(name, children=children)
 
 
-def f_declaracoes(root: Node) -> list:
+def process_children_with_op(name: object, children: list[Node], op: Node) -> Node:
+    """
+    Processa os filhos de um nó e retorna um novo nó com base no número de filhos,
+    incluindo um operador específico.
+    """
+    processed_children = process_children(name, children)
+    if processed_children is None:
+        return None
+    return op, processed_children
+
+
+def f_program(root: Node) -> Node:
+    """Processa o programa, que é o nó raiz da árvore de derivação."""
+    _, decs, cmds, _ = root.children
+    decs, cmds = f_declarations(decs), f_commands(cmds)
+    children = []
+    if decs:
+        children.append(decs)
+    if cmds:
+        children.append(cmds)
+    return process_children(name=root.name, children=children)
+
+
+def f_declarations(root: Node) -> list:
+    """Processa as declarações de variáveis no programa."""
     if is_empty(root):
         return None
-    d_variavel, ds = root.children
-    d_variavel = f_declaracao_variavel(d_variavel)
-    ds = f_declaracoes(ds)
-    if not ds:
-        return [d_variavel]
-    return [d_variavel] + [ds]
+    var_dec, dec = root.children
+    var_dec, dec = f_variable_declaration(var_dec), f_declarations(dec)
+    if not dec:
+        return [var_dec]
+    return [var_dec] + [dec]
 
 
-def f_declaracao_variavel(root: Node) -> Node:
-    _, tipo, atribuir_variavel, _ = root.children
-    tipo = f_tipo(tipo)
-    atribuir_variavel = f_atribuir_variavel(atribuir_variavel)
-    op_att, children_att = atribuir_variavel
-    return Node(op_att.name, children=[tipo] + children_att)
+def f_variable_declaration(root: Node) -> Node:
+    """Processa a declaração de uma variável."""
+    _, type_node, assign_variable, _ = root.children
+    type_node = f_type(type_node)
+    op_att, children_att = f_assign_variable(assign_variable)
+    return Node(op_att.name, children=[type_node] + children_att)
 
 
-def f_tipo(root: Node) -> Node:
-    """Process the type of a variable."""
+def f_type(root: Node) -> Node:
+    """Processa o tipo de uma variável."""
     kw = root.children[0]
     return Node(kw.name)
 
 
-def f_atribuir_variavel(root: Node) -> Node:
-    op_att, identificadores, atribuicaoidentificadores = root.children
-    identificadores = f_identificadores(identificadores)
-    atribuicaoidentificadores = f_atribuicao_identificadores(atribuicaoidentificadores)
-    children = [identificadores, atribuicaoidentificadores]
+def f_assign_variable(root: Node) -> Node:
+    """Processa a atribuição de variáveis."""
+    op_att, ids, ids_assignment = root.children
+    ids, ids_assignment = f_identifiers(ids), f_identifiers_assignment(ids_assignment)
+    children = [ids, ids_assignment]
     children = flatten(children)
     return op_att, children
 
 
-def f_identificadores(root: Node) -> list:
+def f_identifiers(root: Node) -> list:
     """Retorna lista de identificadores."""
     id, idR = root.children
-    idR = f_identificadoresR(idR)
+    idR = f_identifiersR(idR)
     if not idR:
         return [id]
     return [id] + idR
 
 
-def f_identificadoresR(root: Node) -> list:
+def f_identifiersR(root: Node) -> list:
     """Retorna lista de identificadores adicionais."""
     if is_empty(root):
         return []
     _, id, idR = root.children
-    idR = f_identificadoresR(idR)
+    idR = f_identifiersR(idR)
     if not idR:
         return [id]
     return [id] + idR
 
 
-def f_atribuicao_identificadores(root: Node) -> list:
+def f_identifiers_assignment(root: Node) -> list:
+    """Processa a atribuição de identificadores."""
     if is_empty(root):
         return []
-    _, expr, aiR = root.children
-    expr = f_expr(expr)
-    aiR = f_atribuicao_identificadoresR(aiR)
-    if not aiR:
+    _, expr, iaR = root.children
+    expr, iaR = f_expr(expr), f_identifiers_assignmentR(iaR)
+    if not iaR:
         return [expr]
-    return [expr] + aiR
+    return [expr] + iaR
 
 
-def f_atribuicao_identificadoresR(root: Node) -> Node:
+def f_identifiers_assignmentR(root: Node) -> Node:
+    """Processa a atribuição de identificadores adicionais."""
     if is_empty(root):
         return []
-    _, expr, aiR = root.children
-    expr = f_expr(expr)
-    aiR = f_atribuicao_identificadoresR(aiR)
-    if not aiR:
+    _, expr, iaR = root.children
+    expr, iaR = f_expr(expr), f_identifiers_assignmentR(iaR)
+    if not iaR:
         return [expr]
-    return [expr] + aiR
+    return [expr] + iaR
 
 
-def f_comandos(root: Node) -> list:
-    """Process commands in the program."""
+def f_commands(root: Node) -> list:
+    """Processa os comandos do programa."""
     if is_empty(root):
         return []
     cmd, cmds = root.children
-    cmd = f_comando(cmd)
-    cmds = f_comandos(cmds)
+    cmd, cmds = f_command(cmd), f_commands(cmds)
     if not cmds:
         return [cmd]
     return [cmd] + cmds
 
 
-def f_comando(root: Node) -> Node:
+def f_command(root: Node) -> Node:
+    """Processa um comando, despachando para a função apropriada conforme o tipo."""
     child = root.children[0]
-    if child.name == AtribuirValor:
-        return f_atribuir_valor(child)
-    elif child.name == Condicional:
-        return f_condicional(child)
-    elif child.name == LacoRepeticao:
-        return f_laco_repeticao(child)
-    elif child.name == Movimento:
-        return f_movimento(child)
-    elif child.name == ControleCaneta:
-        return f_controle_caneta(child)
-    elif child.name == ControleTela:
-        return f_controle_tela(child)
-    else:
-        return child
+    dispatch_map = {
+        AssignValue: f_assign_value,
+        Conditional: f_conditional,
+        Loop: f_loop,
+        Movement: f_generic_command,
+        PenControl: f_generic_command,
+        ScreenControl: f_generic_command,
+    }
+    handler = dispatch_map.get(child.name)
+    if handler:
+        return handler(child)
+    return child
 
 
-def f_atribuir_valor(root: Node) -> Node:
-    """Process an assignment command."""
+def f_assign_value(root: Node) -> Node:
+    """Processa o comando de atribuição de valor."""
     id, op, expr, _ = root.children
     expr = f_expr(expr)
     return Node(op.name, children=[id, expr])
 
 
-def f_condicional(root: Node) -> Node:
-    """Process a conditional command."""
-    se, expr, _, cmds, senao, _, _ = root.children
-    expr = f_expr(expr)
-    cmds = f_comandos(cmds)
-    senao = f_senao(senao)
+def f_conditional(root: Node) -> Node:
+    """Processa o comando condicional (SE)."""
+    if_, expr, _, cmds, else_, _, _ = root.children
+    expr, cmds, else_ = f_expr(expr), f_commands(cmds), f_else(else_)
     children = [expr, cmds]
-    if senao:
-        children.append(senao)
+    if else_:
+        children.append(else_)
     children = flatten(children)
-    return Node(se.name, children=children)
+    return Node(if_.name, children=children)
 
 
-def f_senao(root: Node) -> Node:
+def f_else(root: Node) -> Node:
+    """Processa o comando ELSE (SENÃO) do comando condicional (SE)."""
     if is_empty(root):
         return None
     senao, cmds = root.children
-    cmds = f_comandos(cmds)
+    cmds = f_commands(cmds)
     cmds = flatten(cmds)
     return Node(senao.name, children=cmds)
 
 
-def f_laco_repeticao(root: Node) -> Node:
-    """Process a loop command."""
+def f_loop(root: Node) -> Node:
+    """Processa um comando de loop (REPETIR ou ENQUANTO)."""
     child = root.children[0]
-    if child.name in [Repita, Enquanto]:
-        _, expr, _, cmds, _, _ = child.children
-        expr = f_expr(expr)
-        cmds = f_comandos(cmds)
-        children = [expr, cmds]
-        children = flatten(children)
-        return Node(child.name, children=children)
-    return child
+    _, expr, _, cmds, _, _ = child.children
+    expr, cmds = f_expr(expr), f_commands(cmds)
+    children = [expr, cmds]
+    children = flatten(children)
+    return Node(child.name, children=children)
 
 
-def f_movimento(root: Node) -> Node:
-    """Process a movement command."""
-    if len(root.children) == 4:
-        cmd, expr1, expr2, _ = root.children
-        expr1 = f_expr(expr1)
-        expr2 = f_expr(expr2)
-        return Node(cmd.name, children=[expr1, expr2])
-    cmd, expr, _ = root.children
-    return Node(cmd.name, children=[f_expr(expr)])
-
-
-def f_controle_caneta(root: Node) -> Node:
-    """Process a pen control command."""
+def f_generic_command(root: Node) -> Node:
+    """Processa um comando qualquer que seja de:
+    movimento, controle de caneta ou controle de tela.
+    """
     if len(root.children) == 2:
         cmd, _ = root.children
         return Node(cmd.name)
-    cmd, expr, _ = root.children
-    expr = f_expr(expr)
-    return Node(cmd.name, children=[expr])
-
-
-def f_controle_tela(root: Node) -> Node:
-    """Process a screen control command."""
-    if len(root.children) == 2:
-        cmd, _ = root.children
-        return Node(cmd.name)
-    cmd, expr, _ = root.children
-    expr = f_expr(expr)
-    return Node(cmd.name, children=[expr])
+    if len(root.children) == 3:
+        cmd, expr, _ = root.children
+        return Node(cmd.name, children=[f_expr(expr)])
+    cmd, expr1, expr2, _ = root.children
+    return Node(cmd.name, children=[f_expr(expr1), f_expr(expr2)])
 
 
 def f_expr(root: Node) -> Node:
+    """Processa uma expressão, despachando para a função apropriada."""
     or_expr = root.children[0]
     return f_or_expr(or_expr)
 
 
 def f_or_expr(root: Node) -> Node:
+    """Processa uma expressão lógica OR."""
     and_expr, or_expr_tail = root.children
-    and_expr = f_and_expr(and_expr)
-    or_expr_tail = f_or_expr_tail(or_expr_tail)
-    if isinstance(or_expr_tail, tuple):
-        op, right = or_expr_tail
-        return Node(op.name, children=[and_expr, right])
-    children = []
-    if and_expr:
-        children.append(and_expr)
-    if or_expr_tail:
-        children.append(or_expr_tail)
-    children = flatten(children)
-    if len(children) == 0:
+    and_expr, or_expr_tail = f_and_expr(and_expr), f_or_expr_tail(or_expr_tail)
+    if or_expr_tail is None:
+        return and_expr
+    op, right = or_expr_tail
+    return Node(op.name, children=[and_expr, right])
+
+
+def f_or_expr_tail(root: Node) -> tuple[Node, Node] | None:
+    """Processa a parte final de uma expressão lógica OR."""
+    if is_empty(root):
         return None
-    if len(children) == 1:
-        return children[0]
-    return Node(root.name, children=children)
+    op1, and_expr, or_expr_tail = root.children
+    and_expr, or_expr_tail = f_and_expr(and_expr), f_or_expr_tail(or_expr_tail)
+    if or_expr_tail is None:
+        return op1, and_expr
+    op2, right = or_expr_tail
+    return op1, Node(op2.name, children=[and_expr, right])
 
 
 def f_and_expr(root: Node) -> Node:
+    """Processa uma expressão lógica AND."""
     not_expr, and_expr_tail = root.children
-    not_expr = f_not_expr(not_expr)
-    and_expr_tail = f_and_expr_tail(and_expr_tail)
-    if isinstance(and_expr_tail, tuple):
-        op, right = and_expr_tail
-        return Node(op.name, children=[not_expr, right])
-    children = []
-    if not_expr:
-        children.append(not_expr)
-    if and_expr_tail:
-        children.append(and_expr_tail)
-    children = flatten(children)
-    if len(children) == 0:
-        return None
-    if len(children) == 1:
-        return children[0]
-    return Node(root.name, children=children)
+    not_expr, and_expr_tail = f_not_expr(not_expr), f_and_expr_tail(and_expr_tail)
+    if and_expr_tail is None:
+        return not_expr
+    op, right = and_expr_tail
+    return Node(op.name, children=[not_expr, right])
 
 
-def f_and_expr_tail(root: Node) -> Node:
+def f_and_expr_tail(root: Node) -> tuple[Node, Node] | None:
+    """Processa a parte final de uma expressão lógica AND."""
     if is_empty(root):
         return None
-    op, mulexpr, and_expr_tail = root.children
-    mulexpr = f_expr(mulexpr)
-    and_expr_tail = f_and_expr_tail(and_expr_tail)
-    children = [mulexpr]
-    if and_expr_tail:
-        children.append(and_expr_tail)
-    children = flatten(children)
-    if len(children) == 0:
-        return None
-    if len(children) == 1:
-        return op, children[0]
-    return op, Node(root.name, children=children)
+    op, not_expr, and_expr_tail = root.children
+    not_expr, and_expr_tail = f_not_expr(not_expr), f_and_expr_tail(and_expr_tail)
+    if and_expr_tail is None:
+        return op, not_expr
+    op2, right = and_expr_tail
+    return op, Node(op2.name, children=[not_expr, right])
 
 
 def f_not_expr(root: Node) -> Node:
+    """Processa uma expressão lógica NOT."""
     if len(root.children) == 1:
-        add_expr = root.children[0]
-        return f_add_expr(add_expr)
-
+        return f_add_expr(root.children[0])
     op, not_expr = root.children
-    not_expr = f_not_expr(not_expr)
-    return Node(op.name, children=[not_expr])
+    return Node(op.name, children=[f_not_expr(not_expr)])
 
 
 def f_add_expr(root: Node) -> Node:
+    """Processa uma expressão de adição."""
     mul_expr, add_expr_tail = root.children
-    mul_expr = f_mul_expr(mul_expr)
-    add_expr_tail = f_add_expr_tail(add_expr_tail)
-    if isinstance(add_expr_tail, tuple):
-        op, right = add_expr_tail
-        return Node(op.name, children=[mul_expr, right])
-    children = []
-    if mul_expr:
-        children.append(mul_expr)
-    if add_expr_tail:
-        children.append(add_expr_tail)
-    children = flatten(children)
-    if len(children) == 0:
-        return None
-    if len(children) == 1:
-        return children[0]
-    return Node(root.name, children=children)
+    mul_expr, add_expr_tail = f_mul_expr(mul_expr), f_add_expr_tail(add_expr_tail)
+    if add_expr_tail is None:
+        return mul_expr
+    op, right = add_expr_tail
+    return Node(op.name, children=[mul_expr, right])
 
 
-def f_add_expr_tail(root: Node) -> Node:
+def f_add_expr_tail(root: Node) -> tuple[Node, Node] | None:
+    """Processa a parte final de uma expressão de adição."""
     if is_empty(root):
         return None
     op, mul_expr, add_expr_tail = root.children
-    mul_expr = f_mul_expr(mul_expr)
-    add_expr_tail = f_add_expr_tail(add_expr_tail)
-    if isinstance(add_expr_tail, tuple):
-        op2, add_expr_tail = add_expr_tail
-        return op, Node(op2.name, children=[mul_expr, add_expr_tail])
-    children = []
-    if mul_expr:
-        children.append(mul_expr)
-    if add_expr_tail:
-        children.append(add_expr_tail)
-    children = flatten(children)
-    if len(children) == 0:
-        return None
-    if len(children) == 1:
-        return op, children[0]
-    return op, Node(root.name, children=children)
+    mul_expr, add_expr_tail = f_mul_expr(mul_expr), f_add_expr_tail(add_expr_tail)
+    if add_expr_tail is None:
+        return op, mul_expr
+    op2, right = add_expr_tail
+    return op, Node(op2.name, children=[mul_expr, right])
 
 
 def f_mul_expr(root: Node) -> Node:
+    """Processa uma expressão de multiplicação."""
     primary, mul_expr_tail = root.children
-    primary = f_primary(primary)
-    mul_expr_tail = f_mul_expr_tail(mul_expr_tail)
-    if isinstance(mul_expr_tail, tuple):
-        op, right = mul_expr_tail
-        return Node(op.name, children=[primary, right])
-    children = []
-    if primary:
-        children.append(primary)
-    if mul_expr_tail:
-        children.append(mul_expr_tail)
-    children = flatten(children)
-    if len(children) == 0:
-        return None
-    if len(children) == 1:
-        return children[0]
-    return Node(root.name, children=children)
+    primary, mul_expr_tail = f_primary(primary), f_mul_expr_tail(mul_expr_tail)
+    if mul_expr_tail is None:
+        return primary
+    op, right = mul_expr_tail
+    return Node(op.name, children=[primary, right])
 
 
-def f_mul_expr_tail(root: Node) -> Node:
+def f_mul_expr_tail(root: Node) -> tuple[Node, Node] | None:
+    """Processa a parte final de uma expressão de multiplicação."""
     if is_empty(root):
         return None
     op, primary, mul_expr_tail = root.children
-    primary = f_primary(primary)
-    mul_expr_tail = f_mul_expr_tail(mul_expr_tail)
-    children = [primary]
-    if mul_expr_tail:
-        children.append(mul_expr_tail)
-    children = flatten(children)
-    if len(children) == 0:
-        return None
-    if len(children) == 1:
-        return op, children[0]
-    return op, Node(root.name, children=children)
+    primary, mul_expr_tail = f_primary(primary), f_mul_expr_tail(mul_expr_tail)
+    if mul_expr_tail is None:
+        return op, primary
+    op2, right = mul_expr_tail
+    return op, Node(op2.name, children=[primary, right])
 
 
 def f_primary(root: Node) -> Node:
+    """Processa um elemento primário de uma expressão."""
     if len(root.children) == 1:
-        # Se for um único filho, é um primário simples
         return Node(name=root.children[0].name)
     _, expr, _ = root.children
-    expr = f_expr(expr)
-    return expr
+    return f_expr(expr)
 
 
-def f_or_expr_tail(root: Node) -> Node:
-    if is_empty(root):
-        return None
-    op, expr, or_expr_tail = root.children
-    expr = f_expr(expr)
-    or_expr_tail = f_or_expr_tail(or_expr_tail)
-    children = [expr]
-    if or_expr_tail:
-        children.append(or_expr_tail)
-    children = flatten(children)
-    if len(children) == 0:
-        return None
-    if len(children) == 1:
-        return op, children[0]
-
-    return op, Node(root.name, children=children)
-
-
-# Exemplo de texto para análise
-# TODO: ERROR: girar_direita 90 + 1  + 0010 - 12 * 7 / 0;
+# INPUT 1
 # text = """
 # inicio
 #     // Desenha as quatro arestas do quadrado
@@ -421,6 +345,7 @@ def f_or_expr_tail(root: Node) -> Node:
 # fim
 # """
 
+# INPUT 2
 # text = """
 # inicio
 #     var inteiro : tamanho_lado ;
@@ -444,26 +369,36 @@ def f_or_expr_tail(root: Node) -> Node:
 # fim
 # """
 
+# INPUT 3
+# text = """
+# inicio
+#     var inteiro : lado ;
+#     var texto : cor ;
+
+#     lado = 5;
+#     cor_de_fundo "black";
+#     definir_espessura 2;
+
+#     repita 50 vezes
+#         // Muda a cor da linha a cada iteracao
+#         definir_cor "cyan";
+
+#         // Desenha e aumenta o lado
+#         avancar lado ;
+#         girar_direita 90;
+#         lado = lado + 5;
+#     fim_repita;
+# fim
+# """
+
 text = """
 inicio
-    var inteiro : lado ;
-    var texto : cor ;
-
-    lado = 5;
-    cor_de_fundo "black";
-    definir_espessura 2;
-    
-    repita 50 vezes
-        // Muda a cor da linha a cada iteracao
-        definir_cor "cyan";
-
-        // Desenha e aumenta o lado
-        avancar lado ;
-        girar_direita 90;
-        lado = lado + 5;
-    fim_repita;
+    resultado = verdadeiro || falso || falso;
+    definir_espessura 5 + 12 && 45;
+    ir_para 10 20;
 fim
 """
+
 
 # Tabela LL(1)
 ll1_table = LL1Table(grammar=grammar)
@@ -497,7 +432,7 @@ print(
 
 print("Árvore sintática abstrata:")
 root_copy = deepcopy(derivation_tree_root)
-ast_root = f_programa(derivation_tree_root)
+ast_root = f_program(derivation_tree_root)
 for pre, fill, node in RenderTree(ast_root):
     print(
         f"{pre}"
@@ -506,39 +441,3 @@ for pre, fill, node in RenderTree(ast_root):
             False: Fore.BLACK + f"{node.name}" + Fore.RESET,
         }[node.is_leaf]
     )
-
-
-# print("ÁRVORE DE DERIVAÇÃO(depois):")
-# for pre, fill, node in RenderTree(derivation_tree_root):
-#     print(
-#         f"{pre}"
-#         + {
-#             True: Fore.YELLOW + f"{node.name}" + Fore.RESET,
-#             False: Fore.BLACK + f"{node.name}" + Fore.RESET,
-#         }[node.is_leaf]
-#     )
-
-# # veriicar se a arvore de derivacao após as operacoes é igual a arvore de derivacao que foi copiada antes
-# def are_trees_equal(node1: Node, node2: Node) -> bool:
-#     """Compara se duas árvores são iguais em termos de estrutura e conteúdo."""
-#     if node1.name != node2.name:
-#         return False
-#     if len(node1.children) != len(node2.children):
-
-#         print(Fore.RED + f"Node {node1.name} children: {[child.name for child in node1.children]}" + Fore.RESET)
-#         print(Fore.RED + f"Node {node2.name} children: {[child.name for child in node2.children]}" + Fore.RESET)
-#         print()
-#         return False
-#     return all(are_trees_equal(c1, c2) for c1, c2 in zip(node1.children, node2.children))
-
-# # Substituir a comparação atual pela nova função
-# if are_trees_equal(derivation_tree_root, root_copy):
-#     print(
-#         Fore.GREEN
-#         + "A árvore de derivação não foi alterada após as operações."
-#         + Fore.RESET
-#     )
-# else:
-#     print(
-#         Fore.RED + "A árvore de derivação foi alterada após as operações." + Fore.RESET
-#     )

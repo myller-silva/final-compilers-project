@@ -121,26 +121,26 @@ terminals = [
 
 # --- NAO TERMINAIS DA GRAMATICA ---
 
-Programa = NonTerminal("Programa")
-Declaracoes = NonTerminal("Declaracoes")
-DeclaracaoVariavel = NonTerminal("DeclaracaoVariavel")
-AtribuirVariavel = NonTerminal("AtribuirVariavel")
-Identificadores = NonTerminal("Identificadores")
-IdentificadoresR = NonTerminal("IdentificadoresR")
-AtribuicaoIdentificadores = NonTerminal("AtribuicaoIdentificadores")
-AtribuicaoIdentificadoresR = NonTerminal("AtribuicaoIdentificadoresR")
-Comandos = NonTerminal("Comandos")
-Comando = NonTerminal("Comando")
-AtribuirValor = NonTerminal("AtribuirValor")
-Condicional = NonTerminal("Condicional")
-Senao = NonTerminal("Senao")
-LacoRepeticao = NonTerminal("LacoRepeticao")
-Repita = NonTerminal("Repita")
-Enquanto = NonTerminal("Enquanto")
-Movimento = NonTerminal("Movimento")
-ControleCaneta = NonTerminal("ControleCaneta")
-ControleTela = NonTerminal("ControleTela")
-Tipo = NonTerminal("Tipo")
+Program = NonTerminal("Program")
+Declarations = NonTerminal("Declarations")
+VariableDeclaration = NonTerminal("VariableDeclaration")
+AssignVariable = NonTerminal("AssignVariable")
+Identifiers = NonTerminal("Identifiers")
+IdentifiersR = NonTerminal("IdentifiersR")
+IdentifiersAssignment = NonTerminal("IdentifiersAssignment")
+IdentifiersAssignmentR = NonTerminal("IdentifiersAssignmentR")
+Commands = NonTerminal("Commands")
+Command = NonTerminal("Command")
+AssignValue = NonTerminal("AssignValue")
+Conditional = NonTerminal("Conditional")
+Else = NonTerminal("Else")
+Loop = NonTerminal("Loop")
+Repeat = NonTerminal("Repeat")
+While = NonTerminal("While")
+Movement = NonTerminal("Movement")
+PenControl = NonTerminal("PenControl")
+ScreenControl = NonTerminal("ScreenControl")
+Type = NonTerminal("Type")
 
 Expr = NonTerminal("Expr")
 OrExpr = NonTerminal("OrExpr")
@@ -157,26 +157,26 @@ Primary = NonTerminal("Primary")
 
 
 non_terminals = [
-    Programa,
-    Declaracoes,
-    DeclaracaoVariavel,
-    AtribuirVariavel,
-    Identificadores,
-    IdentificadoresR,
-    AtribuicaoIdentificadores,
-    AtribuicaoIdentificadoresR,
-    Comandos,
-    Comando,
-    AtribuirValor,
-    Condicional,
-    Senao,
-    LacoRepeticao,
-    Repita,
-    Enquanto,
-    Movimento,
-    ControleCaneta,
-    ControleTela,
-    Tipo,
+    Program,
+    Declarations,
+    VariableDeclaration,
+    AssignVariable,
+    Identifiers,
+    IdentifiersR,
+    IdentifiersAssignment,
+    IdentifiersAssignmentR,
+    Commands,
+    Command,
+    AssignValue,
+    Conditional,
+    Else,
+    Loop,
+    Repeat,
+    While,
+    Movement,
+    PenControl,
+    ScreenControl,
+    Type,
     Expr,
     OrExpr,
     OrExprTail,
@@ -192,62 +192,62 @@ non_terminals = [
 
 # --- PRODUÇÕES DA GRAMATICA ---
 productions = [
-    # --- Programa ---
-    Programa >> [kw_inicio_bloco, Declaracoes, Comandos, kw_fim_bloco],
-    # --- Declaracoes ---
-    Declaracoes >> [DeclaracaoVariavel, Declaracoes],
-    Declaracoes >> [],
-    DeclaracaoVariavel >> [kw_var, Tipo, AtribuirVariavel, ponto_virgula],
-    AtribuirVariavel >> [dois_pontos, Identificadores, AtribuicaoIdentificadores],
-    Identificadores >> [identificador, IdentificadoresR],
-    IdentificadoresR >> [virgula, identificador, IdentificadoresR],
-    IdentificadoresR >> [],
-    AtribuicaoIdentificadores >> [op_atribuicao, Expr, AtribuicaoIdentificadoresR],
-    AtribuicaoIdentificadores >> [],
-    AtribuicaoIdentificadoresR >> [virgula, Expr, AtribuicaoIdentificadoresR],
-    AtribuicaoIdentificadoresR >> [],
-    # --- Tipo ---
-    Tipo >> [kw_inteiro],
-    Tipo >> [kw_real],
-    Tipo >> [kw_texto],
-    Tipo >> [kw_logico],
-    # --- Comandos ---
-    Comandos >> [Comando, Comandos],
-    Comandos >> [],
-    # --- Comando ---
-    Comando >> [AtribuirValor],
-    Comando >> [Condicional],
-    Comando >> [LacoRepeticao],
-    Comando >> [Movimento],
-    Comando >> [ControleCaneta],
-    Comando >> [ControleTela],
-    # --- Atribuicao ---
-    AtribuirValor >> [identificador, op_atribuicao, Expr, ponto_virgula],
-    # --- Condicional (SE) ---
-    Condicional >> [kw_se, Expr, kw_entao, Comandos, Senao, kw_fim_se, ponto_virgula],
-    Senao >> [kw_senao, Comandos],
-    Senao >> [],
-    # --- LacoRepeticao ---
-    LacoRepeticao >> [Repita],
-    LacoRepeticao >> [Enquanto],
-    # --- LacoRepeticao (Repita) ---
-    Repita >> [kw_repita, Expr, kw_vezes, Comandos, kw_fim_repita, ponto_virgula],
-    # --- LacoRepeticao (Enquanto) ---
-    Enquanto >> [kw_enquanto, Expr, kw_faca, Comandos, kw_fim_enquanto, ponto_virgula],
-    # --- Movimento ---
-    Movimento >> [cmd_avancar, Expr, ponto_virgula],
-    Movimento >> [cmd_recuar, Expr, ponto_virgula],
-    Movimento >> [cmd_girar_direita, Expr, ponto_virgula],
-    Movimento >> [cmd_girar_esquerda, Expr, ponto_virgula],
-    Movimento >> [cmd_ir_para, Expr, Expr, ponto_virgula],
-    # --- Controle da caneta ---
-    ControleCaneta >> [cmd_levantar_caneta, ponto_virgula],
-    ControleCaneta >> [cmd_abaixar_caneta, ponto_virgula],
-    ControleCaneta >> [cmd_definir_cor, Expr, ponto_virgula],
-    ControleCaneta >> [cmd_definir_espessura, Expr, ponto_virgula],
-    # --- Controle de tela ---
-    ControleTela >> [cmd_limpar_tela, ponto_virgula],
-    ControleTela >> [cmd_cor_de_fundo, Expr, ponto_virgula],
+    # --- Program ---
+    Program >> [kw_inicio_bloco, Declarations, Commands, kw_fim_bloco],
+    # --- Declarations ---
+    Declarations >> [VariableDeclaration, Declarations],
+    Declarations >> [],
+    VariableDeclaration >> [kw_var, Type, AssignVariable, ponto_virgula],
+    AssignVariable >> [dois_pontos, Identifiers, IdentifiersAssignment],
+    Identifiers >> [identificador, IdentifiersR],
+    IdentifiersR >> [virgula, identificador, IdentifiersR],
+    IdentifiersR >> [],
+    IdentifiersAssignment >> [op_atribuicao, Expr, IdentifiersAssignmentR],
+    IdentifiersAssignment >> [],
+    IdentifiersAssignmentR >> [virgula, Expr, IdentifiersAssignmentR],
+    IdentifiersAssignmentR >> [],
+    # --- Type ---
+    Type >> [kw_inteiro],
+    Type >> [kw_real],
+    Type >> [kw_texto],
+    Type >> [kw_logico],
+    # --- Commands ---
+    Commands >> [Command, Commands],
+    Commands >> [],
+    # --- Command ---
+    Command >> [AssignValue],
+    Command >> [Conditional],
+    Command >> [Loop],
+    Command >> [Movement],
+    Command >> [PenControl],
+    Command >> [ScreenControl],
+    # --- AssignValue ---
+    AssignValue >> [identificador, op_atribuicao, Expr, ponto_virgula],
+    # --- Conditional (SE) ---
+    Conditional >> [kw_se, Expr, kw_entao, Commands, Else, kw_fim_se, ponto_virgula],
+    Else >> [kw_senao, Commands],
+    Else >> [],
+    # --- Loop ---
+    Loop >> [Repeat],
+    Loop >> [While],
+    # --- Loop (Repeat) ---
+    Repeat >> [kw_repita, Expr, kw_vezes, Commands, kw_fim_repita, ponto_virgula],
+    # --- Loop (While) ---
+    While >> [kw_enquanto, Expr, kw_faca, Commands, kw_fim_enquanto, ponto_virgula],
+    # --- Movement ---
+    Movement >> [cmd_avancar, Expr, ponto_virgula],
+    Movement >> [cmd_recuar, Expr, ponto_virgula],
+    Movement >> [cmd_girar_direita, Expr, ponto_virgula],
+    Movement >> [cmd_girar_esquerda, Expr, ponto_virgula],
+    Movement >> [cmd_ir_para, Expr, Expr, ponto_virgula],
+    # --- PenControl ---
+    PenControl >> [cmd_levantar_caneta, ponto_virgula],
+    PenControl >> [cmd_abaixar_caneta, ponto_virgula],
+    PenControl >> [cmd_definir_cor, Expr, ponto_virgula],
+    PenControl >> [cmd_definir_espessura, Expr, ponto_virgula],
+    # --- ScreenControl ---
+    ScreenControl >> [cmd_limpar_tela, ponto_virgula],
+    ScreenControl >> [cmd_cor_de_fundo, Expr, ponto_virgula],
     # --- Expressões --- (Aritméticas e Lógicas)
     Expr >> [OrExpr],
     OrExpr >> [AndExpr, OrExprTail],
@@ -283,7 +283,7 @@ productions = [
 
 
 grammar = Grammar(
-    start_symbol=Programa,
+    start_symbol=Program,
     terminals=terminals,
     non_terminals=non_terminals,
     productions=productions,

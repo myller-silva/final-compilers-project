@@ -31,9 +31,7 @@ def flatten(items):
     return [item for item in items if item is not None]
 
 
-# TODO: verificar se é melhor retornar "children[0]" ou "Node(children[0].name, children=children[0].children)" quando há apenas um filho.
 def f_programa(root: Node) -> Node:
-    # TODO: OKAY
     _, declaracoes, comandos, _ = root.children
     declaracoes = f_declaracoes(declaracoes)
     comandos = f_comandos(comandos)
@@ -48,9 +46,6 @@ def f_programa(root: Node) -> Node:
     if len(children) == 1:
         return children[0]
     return Node(root.name, children=children)
-
-
-
 
 
 def f_declaracoes(root: Node) -> list:
@@ -68,13 +63,8 @@ def f_declaracao_variavel(root: Node) -> Node:
     _, tipo, atribuir_variavel, _ = root.children
     tipo = f_tipo(tipo)
     atribuir_variavel = f_atribuir_variavel(atribuir_variavel)
-    if atribuir_variavel is None:  # nunca vai ser None, mas é bom verificar
-        return None
     op_att, children_att = atribuir_variavel
-    return Node(
-        op_att.name,
-        children=[tipo] + children_att,
-    )
+    return Node(op_att.name, children=[tipo] + children_att)
 
 
 def f_tipo(root: Node) -> Node:
@@ -87,14 +77,8 @@ def f_atribuir_variavel(root: Node) -> Node:
     op_att, identificadores, atribuicaoidentificadores = root.children
     identificadores = f_identificadores(identificadores)
     atribuicaoidentificadores = f_atribuicao_identificadores(atribuicaoidentificadores)
-    children = []
-    if identificadores:
-        children.append(identificadores)
-    if atribuicaoidentificadores:
-        children.append(atribuicaoidentificadores)
+    children = [identificadores, atribuicaoidentificadores]
     children = flatten(children)
-    if len(children) == 0:  # nunca vai ser vazio, mas é bom verificar
-        return None
     return op_att, children
 
 
@@ -200,7 +184,6 @@ def f_senao(root: Node) -> Node:
 
 
 def f_laco_repeticao(root: Node) -> Node:
-    # TODO IMPLEMENTAR
     """Process a loop command."""
     child = root.children[0]
     if child.name in [Repita, Enquanto]:
@@ -423,7 +406,7 @@ def f_or_expr_tail(root: Node) -> Node:
 
 
 # Exemplo de texto para análise
-
+# TODO: ERROR: girar_direita 90 + 1  + 0010 - 12 * 7 / 0;
 # text = """
 # inicio
 #     // Desenha as quatro arestas do quadrado
@@ -461,7 +444,6 @@ def f_or_expr_tail(root: Node) -> Node:
 # fim
 # """
 
-# TODO: MELHORAR O NÓ DE DECLARACOES/DECLARACAO_VARIAVEL/TIPO PARA SIMPLIFICAR A AST
 text = """
 inicio
     var inteiro : lado ;
@@ -482,7 +464,6 @@ inicio
     fim_repita;
 fim
 """
-# TODO: ERROR: lado = lado + 5 + 1; (provavlemente no f_add_expr_tail)
 
 # Tabela LL(1)
 ll1_table = LL1Table(grammar=grammar)
@@ -495,7 +476,9 @@ tokens = Tokenizer.tokenize(text, grammar=grammar)
 
 # Derivação
 parsed, derivation_tree_root = parser.parse(tokens)
-# print("ÁRVORE DE DERIVAÇÃO:")
+root_copy = deepcopy(derivation_tree_root)
+
+# print("ÁRVORE DE DERIVAÇÃO(antes):")
 # for pre, fill, node in RenderTree(derivation_tree_root):
 #     print(
 #         f"{pre}"
@@ -523,3 +506,39 @@ for pre, fill, node in RenderTree(ast_root):
             False: Fore.BLACK + f"{node.name}" + Fore.RESET,
         }[node.is_leaf]
     )
+
+
+# print("ÁRVORE DE DERIVAÇÃO(depois):")
+# for pre, fill, node in RenderTree(derivation_tree_root):
+#     print(
+#         f"{pre}"
+#         + {
+#             True: Fore.YELLOW + f"{node.name}" + Fore.RESET,
+#             False: Fore.BLACK + f"{node.name}" + Fore.RESET,
+#         }[node.is_leaf]
+#     )
+
+# # veriicar se a arvore de derivacao após as operacoes é igual a arvore de derivacao que foi copiada antes
+# def are_trees_equal(node1: Node, node2: Node) -> bool:
+#     """Compara se duas árvores são iguais em termos de estrutura e conteúdo."""
+#     if node1.name != node2.name:
+#         return False
+#     if len(node1.children) != len(node2.children):
+
+#         print(Fore.RED + f"Node {node1.name} children: {[child.name for child in node1.children]}" + Fore.RESET)
+#         print(Fore.RED + f"Node {node2.name} children: {[child.name for child in node2.children]}" + Fore.RESET)
+#         print()
+#         return False
+#     return all(are_trees_equal(c1, c2) for c1, c2 in zip(node1.children, node2.children))
+
+# # Substituir a comparação atual pela nova função
+# if are_trees_equal(derivation_tree_root, root_copy):
+#     print(
+#         Fore.GREEN
+#         + "A árvore de derivação não foi alterada após as operações."
+#         + Fore.RESET
+#     )
+# else:
+#     print(
+#         Fore.RED + "A árvore de derivação foi alterada após as operações." + Fore.RESET
+#     )

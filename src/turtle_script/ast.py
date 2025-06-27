@@ -20,17 +20,20 @@ def is_empty(node: Node) -> bool:
 
 def flatten(items):
     """Achata uma lista de itens, processando apenas os elementos que são listas."""
-    from itertools import chain
+    if not items:
+        return []
+    while any(isinstance(item, list) for item in items):
+        items = list(
+            chain.from_iterable(
+                item if isinstance(item, list) else [item] for item in items
+            )
+        )
+    return [item for item in items if item is not None]
 
-    # return list(chain.from_iterable(item if isinstance(item, list) else [item] for item in items))
-    return [
-        subitem
-        for item in items
-        for subitem in (item if isinstance(item, list) else [item])
-    ]
 
-
+# TODO: verificar se é melhor retornar "children[0]" ou "Node(children[0].name, children=children[0].children)" quando há apenas um filho.
 def f_programa(root: Node) -> Node:
+    # TODO: OKAY
     _, declaracoes, comandos, _ = root.children
     declaracoes = f_declaracoes(declaracoes)
     comandos = f_comandos(comandos)
@@ -44,52 +47,44 @@ def f_programa(root: Node) -> Node:
         return None
     if len(children) == 1:
         return children[0]
-
-    root.children = children
-    return root
+    return Node(root.name, children=children)
 
 
-def f_declaracoes(root: Node) -> Node:
-    """Process declarations in the program."""
+
+
+
+def f_declaracoes(root: Node) -> list:
     if is_empty(root):
         return None
-    declaracaovariavel, declaracoes = root.children
-    declaracaovariavel = f_declaracao_variavel(declaracaovariavel)
-    declaracoes = f_declaracoes(declaracoes)
-    children = []
-    if declaracaovariavel:
-        children.append(declaracaovariavel)
-    if declaracoes:
-        children.append(declaracoes)
-    children = flatten(children)
-    if len(children) == 0:
-        return None
-    if len(children) == 1:
-        return children[0]
-    root.children = children
-    return root
+    d_variavel, ds = root.children
+    d_variavel = f_declaracao_variavel(d_variavel)
+    ds = f_declaracoes(ds)
+    if not ds:
+        return [d_variavel]
+    return [d_variavel] + [ds]
 
 
 def f_declaracao_variavel(root: Node) -> Node:
     _, tipo, atribuir_variavel, _ = root.children
-
+    tipo = f_tipo(tipo)
     atribuir_variavel = f_atribuir_variavel(atribuir_variavel)
-    children = [tipo]
-    if atribuir_variavel:
-        children.append(atribuir_variavel)
-
-    children = flatten(children)
-    if len(children) == 0:
+    if atribuir_variavel is None:  # nunca vai ser None, mas é bom verificar
         return None
-    if len(children) == 1:
-        return children[0]
-    root.children = children
-    return root
+    op_att, children_att = atribuir_variavel
+    return Node(
+        op_att.name,
+        children=[tipo] + children_att,
+    )
+
+
+def f_tipo(root: Node) -> Node:
+    """Process the type of a variable."""
+    kw = root.children[0]
+    return Node(kw.name)
 
 
 def f_atribuir_variavel(root: Node) -> Node:
-    # TODO: Retornar lista? de identificadores e expressoes?
-    _, identificadores, atribuicaoidentificadores = root.children
+    op_att, identificadores, atribuicaoidentificadores = root.children
     identificadores = f_identificadores(identificadores)
     atribuicaoidentificadores = f_atribuicao_identificadores(atribuicaoidentificadores)
     children = []
@@ -98,12 +93,9 @@ def f_atribuir_variavel(root: Node) -> Node:
     if atribuicaoidentificadores:
         children.append(atribuicaoidentificadores)
     children = flatten(children)
-    if len(children) == 0:
+    if len(children) == 0:  # nunca vai ser vazio, mas é bom verificar
         return None
-    if len(children) == 1:
-        return children[0]
-    root.children = children
-    return root
+    return op_att, children
 
 
 def f_identificadores(root: Node) -> list:
@@ -127,8 +119,6 @@ def f_identificadoresR(root: Node) -> list:
 
 
 def f_atribuicao_identificadores(root: Node) -> list:
-    # retornar lista de expressões
-    # TODO
     if is_empty(root):
         return []
     _, expr, aiR = root.children
@@ -140,7 +130,6 @@ def f_atribuicao_identificadores(root: Node) -> list:
 
 
 def f_atribuicao_identificadoresR(root: Node) -> Node:
-    # TODO
     if is_empty(root):
         return []
     _, expr, aiR = root.children
@@ -198,10 +187,7 @@ def f_condicional(root: Node) -> Node:
     if senao:
         children.append(senao)
     children = flatten(children)
-    return Node(
-        se.name,
-        children=children,
-    )
+    return Node(se.name, children=children)
 
 
 def f_senao(root: Node) -> Node:
@@ -209,16 +195,13 @@ def f_senao(root: Node) -> Node:
         return None
     senao, cmds = root.children
     cmds = f_comandos(cmds)
-    return Node(
-        senao.name,
-        children=flatten(cmds) if cmds else [],
-    )
+    cmds = flatten(cmds)
+    return Node(senao.name, children=cmds)
 
 
 def f_laco_repeticao(root: Node) -> Node:
     # TODO IMPLEMENTAR
     """Process a loop command."""
-    # return root
     child = root.children[0]
     if child.name in [Repita, Enquanto]:
         _, expr, _, cmds, _, _ = child.children
@@ -242,9 +225,7 @@ def f_movimento(root: Node) -> Node:
 
 
 def f_controle_caneta(root: Node) -> Node:
-    # TODO IMPLEMENTAR
     """Process a pen control command."""
-    # return root
     if len(root.children) == 2:
         cmd, _ = root.children
         return Node(cmd.name)
@@ -254,7 +235,6 @@ def f_controle_caneta(root: Node) -> Node:
 
 
 def f_controle_tela(root: Node) -> Node:
-    # TODO IMPLEMENTAR
     """Process a screen control command."""
     if len(root.children) == 2:
         cmd, _ = root.children
@@ -273,9 +253,9 @@ def f_or_expr(root: Node) -> Node:
     and_expr, or_expr_tail = root.children
     and_expr = f_and_expr(and_expr)
     or_expr_tail = f_or_expr_tail(or_expr_tail)
-    # if isinstance(or_expr_tail, tuple):
-    #     op, right = or_expr_tail
-    #     return Node(op.name, children=[and_expr, right])
+    if isinstance(or_expr_tail, tuple):
+        op, right = or_expr_tail
+        return Node(op.name, children=[and_expr, right])
     children = []
     if and_expr:
         children.append(and_expr)
@@ -286,8 +266,7 @@ def f_or_expr(root: Node) -> Node:
         return None
     if len(children) == 1:
         return children[0]
-    root.children = children
-    return root
+    return Node(root.name, children=children)
 
 
 def f_and_expr(root: Node) -> Node:
@@ -307,8 +286,7 @@ def f_and_expr(root: Node) -> Node:
         return None
     if len(children) == 1:
         return children[0]
-    root.children = children
-    return root
+    return Node(root.name, children=children)
 
 
 def f_and_expr_tail(root: Node) -> Node:
@@ -325,12 +303,10 @@ def f_and_expr_tail(root: Node) -> Node:
         return None
     if len(children) == 1:
         return op, children[0]
-    # root.children = children
     return op, Node(root.name, children=children)
 
 
 def f_not_expr(root: Node) -> Node:
-    # pass
     if len(root.children) == 1:
         add_expr = root.children[0]
         return f_add_expr(add_expr)
@@ -357,19 +333,21 @@ def f_add_expr(root: Node) -> Node:
         return None
     if len(children) == 1:
         return children[0]
-    root.children = children
-    # root.name = op_mais # TODO: VERIFICAR SE TEM QUE VIR DO FILHO OU DAQUI MESMO
-    return root
+    return Node(root.name, children=children)
 
 
 def f_add_expr_tail(root: Node) -> Node:
-    # TODO: FUNÇÃO PROVAVELMENTE ERRADA: O OPERADOR DEVE IR PARA O PAI DELE?
     if is_empty(root):
         return None
     op, mul_expr, add_expr_tail = root.children
     mul_expr = f_mul_expr(mul_expr)
     add_expr_tail = f_add_expr_tail(add_expr_tail)
-    children = [mul_expr]
+    if isinstance(add_expr_tail, tuple):
+        op2, add_expr_tail = add_expr_tail
+        return op, Node(op2.name, children=[mul_expr, add_expr_tail])
+    children = []
+    if mul_expr:
+        children.append(mul_expr)
     if add_expr_tail:
         children.append(add_expr_tail)
     children = flatten(children)
@@ -377,8 +355,6 @@ def f_add_expr_tail(root: Node) -> Node:
         return None
     if len(children) == 1:
         return op, children[0]
-    # root.children = children
-    # return root
     return op, Node(root.name, children=children)
 
 
@@ -399,13 +375,10 @@ def f_mul_expr(root: Node) -> Node:
         return None
     if len(children) == 1:
         return children[0]
-    root.children = children
-    return root
+    return Node(root.name, children=children)
 
 
 def f_mul_expr_tail(root: Node) -> Node:
-    # TODO: RETORNAR COM O OPERADOR NO PAI DELE? PARA FACILITAR QUE O PAI TENHA O OPERADOR NA RAIZ?
-    # return root
     if is_empty(root):
         return None
     op, primary, mul_expr_tail = root.children
@@ -419,14 +392,10 @@ def f_mul_expr_tail(root: Node) -> Node:
         return None
     if len(children) == 1:
         return op, children[0]
-    # root.children = children
-    # TODO: VERIFICAR SE OS FILHOS ESTÃO CORRETOS
     return op, Node(root.name, children=children)
 
 
 def f_primary(root: Node) -> Node:
-    # TODO: melhorar para lidar com o valor do primário
-    # return Node(name=root.children[0].name)
     if len(root.children) == 1:
         # Se for um único filho, é um primário simples
         return Node(name=root.children[0].name)
@@ -450,8 +419,6 @@ def f_or_expr_tail(root: Node) -> Node:
     if len(children) == 1:
         return op, children[0]
 
-    # root.children = children
-    # return root
     return op, Node(root.name, children=children)
 
 
@@ -528,22 +495,22 @@ tokens = Tokenizer.tokenize(text, grammar=grammar)
 
 # Derivação
 parsed, derivation_tree_root = parser.parse(tokens)
+# print("ÁRVORE DE DERIVAÇÃO:")
+# for pre, fill, node in RenderTree(derivation_tree_root):
+#     print(
+#         f"{pre}"
+#         + {
+#             True: Fore.YELLOW + f"{node.name}" + Fore.RESET,
+#             False: Fore.BLACK + f"{node.name}" + Fore.RESET,
+#         }[node.is_leaf]
+#     )
+
 print(
     {
         True: Fore.GREEN + "Análise sintática bem-sucedida!" + Fore.RESET,
         False: Fore.RED + "Erro na análise sintática." + Fore.RESET,
     }[parsed]
 )
-
-print("ÁRVORE DE DERIVAÇÃO:")
-for pre, fill, node in RenderTree(derivation_tree_root):
-    print(
-        f"{pre}"
-        + {
-            True: Fore.YELLOW + f"{node.name}" + Fore.RESET,
-            False: Fore.BLACK + f"{node.name}" + Fore.RESET,
-        }[node.is_leaf]
-    )
 
 print("Árvore sintática abstrata:")
 root_copy = deepcopy(derivation_tree_root)
@@ -556,4 +523,3 @@ for pre, fill, node in RenderTree(ast_root):
             False: Fore.BLACK + f"{node.name}" + Fore.RESET,
         }[node.is_leaf]
     )
-

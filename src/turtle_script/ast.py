@@ -1,16 +1,8 @@
-from grammar import *
-from table_parser_ll1 import LL1Table, LL1ParserTable, Tokenizer
 from colorama import Fore
 from anytree import RenderTree, Node
-from copy import deepcopy
 from itertools import chain
-
-
-# TODO: fazer uma funcao base generica para fazer isso:
-# idR = f_identifiersR(idR)
-# if not idR:
-#     return [id]
-# return [id] + idR
+from grammar import *
+from table_parser_ll1 import LL1Table, LL1ParserTable, Tokenizer
 
 
 def is_empty(node: Node) -> bool:
@@ -51,9 +43,11 @@ def process_children_with_op(name: object, children: list[Node], op: Node) -> No
         return None
     return op, processed_children
 
+
 def get_ast_root(derivation_tree_root: Node) -> Node:
     """Obtém a árvore sintática abstrata (AST) a partir da raiz da árvore de derivação."""
     return f_program(derivation_tree_root)
+
 
 def f_program(root: Node) -> Node:
     """Processa o programa, que é o nó raiz da árvore de derivação."""
@@ -182,31 +176,25 @@ def f_conditional(root: Node) -> Node:
     """Processa o comando condicional (SE)."""
     if_, expr, _, cmds, else_, _, _ = root.children
     expr, cmds, else_ = f_expr(expr), f_commands(cmds), f_else(else_)
-    children = [expr, cmds]
     if else_:
-        children.append(else_)
-    children = flatten(children)
-    return Node(if_.name, children=children)
+        return Node(if_.name, children=flatten([expr, cmds, else_]))
+    return Node(if_.name, children=flatten([expr, cmds]))
 
 
 def f_else(root: Node) -> Node:
     """Processa o comando ELSE (SENÃO) do comando condicional (SE)."""
     if is_empty(root):
         return None
-    senao, cmds = root.children
+    else_, cmds = root.children
     cmds = f_commands(cmds)
-    cmds = flatten(cmds)
-    return Node(senao.name, children=cmds)
+    return Node(else_.name, children=flatten(cmds))
 
 
 def f_loop(root: Node) -> Node:
     """Processa um comando de loop (REPETIR ou ENQUANTO)."""
     child = root.children[0]
     _, expr, _, cmds, _, _ = child.children
-    expr, cmds = f_expr(expr), f_commands(cmds)
-    children = [expr, cmds]
-    children = flatten(children)
-    return Node(child.name, children=children)
+    return Node(child.name, children=flatten([f_expr(expr), f_commands(cmds)]))
 
 
 def f_generic_command(root: Node) -> Node:
@@ -417,7 +405,6 @@ if __name__ == "__main__":
             continue
         else:
             print(Fore.GREEN + "Análise sintática bem-sucedida!" + Fore.RESET)
-        
         print("AST:")
         ast_root = get_ast_root(derivation_tree_root)
         for pre, fill, node in RenderTree(ast_root):

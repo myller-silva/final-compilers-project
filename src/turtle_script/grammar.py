@@ -1,6 +1,4 @@
-from table_parser_ll1 import Terminal
-from table_parser_ll1 import NonTerminal
-from table_parser_ll1 import Grammar
+from table_parser_ll1 import Terminal, NonTerminal, Grammar
 
 # --- TERMINAIS DA GRAMATICA ---
 

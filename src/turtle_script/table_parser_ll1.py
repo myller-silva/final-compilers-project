@@ -1,4 +1,6 @@
 import re
+from collections import deque
+
 # import pandas as pd
 from collections import defaultdict
 from colorama import Fore, Style, init
@@ -291,80 +293,63 @@ class LL1Table:
                     table[(lhs, terminal)] = prod
         return table
 
-    # def to_dataframe(self):
-    #     """Converte a tabela LL(1) em um DataFrame do pandas."""
-    #     df = pd.DataFrame.from_dict(self.table, orient="index")
-    #     df.index = pd.MultiIndex.from_tuples(
-    #         df.index, names=["NonTerminal", "Terminal"]
-    #     )
-    #     df = df.unstack()
-    #     return df
-
 
 class LL1ParserTable:
     def __init__(self, table: LL1Table, start_symbol: NonTerminal):
         self.table = table.table
         self.start_symbol = start_symbol
 
-    def parse(self, tokens: list[Token]) -> tuple[bool, list[Production]]:
+    # TODO: VERIFICAR SE ESTÁ FAZENDO O PARSING CORRETAMENTE
+    # TODO: VERIFICAR PARA VARIAS ENTRADAS (TIPO COM OS 3 INPUTS NECESSARIOS)
+    # TODO: FAZER OS TESTES UNITARIOS PARA VALIDAR O PARSER LL(1)
+    # TODO: RETORNAR NONE AO INVES DE ERRO
+    def parse(self, tokens: list[Token]) -> tuple[bool, Node]:
         """
-        Realiza o parsing LL(1) para a lista de tokens fornecida e retorna 
-        um booleano indicando se a análise foi bem-sucedida e uma lista de produções utilizadas
-        no processo de parsing.
-        Se a análise falhar, retorna False e a lista de produções até o ponto de falha.
+        Realiza o parsing LL(1) com construção da árvore de derivação.
+        :param tokens: Lista de tokens, terminando com o símbolo "$"
+        :return: Tupla (bool, raiz da árvore de derivação (anytree.Node))
         """
-        token_EOF = Token(Grammar.EOF, "$")
-        if not tokens or tokens[-1].terminal != Grammar.EOF:
-            tokens.append(token_EOF)  # Adiciona o token EOF
+        start_symbol = self.start_symbol
 
-        stack = [Grammar.EOF, self.start_symbol]
-        input_tokens = tokens[:]
-        cursor = 0
-        prods = []
+        stack = deque()
+        root = Node(start_symbol)
+        stack.append((start_symbol, root))
+        token_index = 0
+
         while stack:
-            top = stack.pop()
-            current_token = input_tokens[cursor] if cursor < len(input_tokens) else token_EOF
+            top_symbol, top_node = stack.pop()
+            current_token = tokens[token_index]
 
-            if isinstance(top, Terminal) or top == Grammar.EOF:
-                if top != current_token.terminal:
-                    return False, prods
-                cursor += 1 # Avança o cursor para o próximo token
-            elif isinstance(top, NonTerminal):
-                prod = self.table.get((top, current_token.terminal))
-                if not prod:
-                    return False, prods
-                rhs = prod.rhs
-                prods.append(prod)
-                if not (len(rhs) == 1 and rhs[0] == Grammar.EPSILON):
-                    for symbol in reversed(rhs):
-                        stack.append(symbol)
-            else:
-                return False, prods
+            if isinstance(top_symbol, Terminal):
+                # Verificar se top_symbol é EOF?
+                if (
+                    top_symbol != current_token.terminal
+                ):  # Check if the current token is expected
+                    return False, root
+                top_node.name = current_token.lexeme
+                token_index += 1
+                continue
 
-        if cursor != len(input_tokens):
-            return False, prods
+            production = self.table.get((top_symbol, current_token.terminal))
+            if production is None:
+                return False, root
 
-        return True, prods
+            children = []
+            for symbol in production.rhs:
+                if symbol == Grammar.EPSILON:
+                    Node(Grammar.EPSILON, parent=top_node)
+                    continue
+                child = Node(symbol, parent=top_node)
+                children.append((symbol, child))
 
-    @staticmethod
-    def build_derivation_tree(productions): 
-        # TODO: As producoes nao tem informação do lexema, modificar no parser
-        # TODO: Adicionar o valor do Node como o lexema do token
-        # TODO: Exemplo: Node("CMD_AVANCAR", parent=parent, value="avancar"); # parent é o nó pai(Comando, por exemplo)
-        """Constrói a árvore de derivação com base nas produções utilizadas."""
-        non_terminal_nodes = {}
-        root = Node(productions[0].lhs)
-        non_terminal_nodes[productions[0].lhs] = root
-        for prod in productions:
-            lhs_node = non_terminal_nodes.get(prod.lhs)
-            if not lhs_node:
-                lhs_node = Node(prod.lhs)
-                non_terminal_nodes[prod.lhs] = lhs_node
-            for symbol in prod.rhs:
-                child_node = Node(symbol, parent=lhs_node)
-                if isinstance(symbol, NonTerminal):
-                    non_terminal_nodes[symbol] = child_node
-        return root
+            # Empilha os filhos em ordem reversa
+            for symbol, child in reversed(children):
+                stack.append((symbol, child))
+
+        if token_index != len(tokens):
+            return False, root
+
+        return True, root
 
     @staticmethod
     def print_ast(ast: Node):
@@ -373,8 +358,6 @@ class LL1ParserTable:
             node: Node
             print(_)
             print(f"{pre}{node.name}")
-
-
 
 
 # ----------------------
@@ -410,7 +393,7 @@ if __name__ == "__main__":
     print(grammar.terminals)
     print(Fore.BLUE + "Não terminais da gramática:")
     print(grammar.non_terminals)
-    
+
     print(Fore.YELLOW + " Conjuntos FIRST e FOLLOW ".center(50, "="))
 
     print(Fore.BLUE + "Conjuntos FIRST:")
@@ -419,14 +402,14 @@ if __name__ == "__main__":
     print(Fore.BLUE + "Conjuntos FOLLOW:")
     for nt, follow in grammar.follow_sets.items():
         print(Fore.CYAN + f"{nt}:", Style.RESET_ALL, follow)
-    
+
     print(Fore.YELLOW + " Tabela LL(1) ".center(50, "="))
     ll1_table = LL1Table(grammar)
     # df = ll1_table.to_dataframe()
     # print(df)
 
-    print('\n'+Fore.YELLOW + " Exemplos ".center(50, "="))
-    print("\n" + Fore.YELLOW+"-" * 50)
+    print("\n" + Fore.YELLOW + " Exemplos ".center(50, "="))
+    print("\n" + Fore.YELLOW + "-" * 50)
     texts = [
         "ab",
         "abc",
@@ -434,7 +417,7 @@ if __name__ == "__main__":
     ]
     for text in texts:
         tokens = Tokenizer.tokenize(text, grammar)
-        print( f"Texto: {Fore.GREEN}'{text}'")
+        print(f"Texto: {Fore.GREEN}'{text}'")
         print(Fore.CYAN + " Tokens ".center(50, "-"))
         print(f"{Fore.BLUE}{'Terminal':<30} Lexema")
         for token in tokens:
@@ -442,20 +425,19 @@ if __name__ == "__main__":
 
         print(Fore.CYAN + " Parsing ".center(50, "-"))
         parser = LL1ParserTable(ll1_table, S)
-        parsed, ast_prods = parser.parse(tokens)
+        parsed, derivation_tree = parser.parse(tokens)
 
-        derivation_tree = LL1ParserTable.build_derivation_tree(ast_prods)
         print(Fore.BLUE + "\nÁrvore de Derivação:")
         for pre, _, node in RenderTree(derivation_tree):
-            node:Node
-            print(f"{pre}{node.name}")
+            node: Node
+            color = {True: Fore.YELLOW, False: Fore.BLACK}[
+                node.is_leaf and node.name is not Grammar.EPSILON
+            ]
+            print(f"{pre}{color}{node.name}{Style.RESET_ALL}")
 
-        print(Fore.BLUE + "\nProduções utilizadas no parsing:")
-        for prod in ast_prods:
-            print(prod)
-
-        print(Fore.BLUE+"Resultado: "+{
-            True: Fore.GREEN + "ACEITA",
-            False: Fore.RED + "REJEITADA"
-        }[parsed])
-        print("\n" + Fore.YELLOW+"-" * 50)
+        print(
+            Fore.BLUE
+            + "Resultado: "
+            + {True: Fore.GREEN + "ACEITA", False: Fore.RED + "REJEITADA"}[parsed]
+        )
+        print("\n" + Fore.YELLOW + "-" * 50)

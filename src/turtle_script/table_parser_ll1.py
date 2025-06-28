@@ -299,10 +299,6 @@ class LL1ParserTable:
         self.table = table.table
         self.start_symbol = start_symbol
 
-    # TODO: VERIFICAR SE ESTÁ FAZENDO O PARSING CORRETAMENTE
-    # TODO: VERIFICAR PARA VARIAS ENTRADAS (TIPO COM OS 3 INPUTS NECESSARIOS)
-    # TODO: FAZER OS TESTES UNITARIOS PARA VALIDAR O PARSER LL(1)
-    # TODO: RETORNAR NONE AO INVES DE ERRO
     def parse(self, tokens: list[Token]) -> tuple[bool, Node]:
         """
         Realiza o parsing LL(1) com construção da árvore de derivação.
@@ -318,13 +314,13 @@ class LL1ParserTable:
 
         while stack:
             top_symbol, top_node = stack.pop()
-            current_token = tokens[token_index]
+
+            current_token = tokens[token_index] \
+                if token_index < len(tokens) \
+                else Token(Grammar.EOF, "$")
 
             if isinstance(top_symbol, Terminal):
-                # Verificar se top_symbol é EOF?
-                if (
-                    top_symbol != current_token.terminal
-                ):  # Check if the current token is expected
+                if top_symbol != current_token.terminal:
                     return False, root
                 top_node.name = current_token.lexeme
                 token_index += 1
@@ -372,9 +368,9 @@ if __name__ == "__main__":
     productions = [
         S >> [a, A, B, b],
         A >> [c],
-        A >> [Grammar.EPSILON],
+        A >> [],
         B >> [d],
-        B >> [Grammar.EPSILON],
+        B >> [],
     ]
 
     grammar = Grammar(
@@ -405,8 +401,12 @@ if __name__ == "__main__":
 
     print(Fore.YELLOW + " Tabela LL(1) ".center(50, "="))
     ll1_table = LL1Table(grammar)
-    # df = ll1_table.to_dataframe()
-    # print(df)
+    print(f"{'NonTerminal':<15} {'Terminal':<15} Production")
+    for key, production in ll1_table.table.items():
+        non_terminal, terminal = key
+        print(
+            f"{Fore.CYAN}{non_terminal.name:<15} {terminal.name:<15} {Style.RESET_ALL}{production}"
+        )
 
     print("\n" + Fore.YELLOW + " Exemplos ".center(50, "="))
     print("\n" + Fore.YELLOW + "-" * 50)

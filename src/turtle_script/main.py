@@ -61,7 +61,7 @@ if __name__ == "__main__":
     ll1_table = LL1Table(grammar)
     ll1_parser_table = LL1ParserTable(ll1_table, grammar.start_symbol)
 
-    parsed, parsed_productions = ll1_parser_table.parse(tokens)
+    parsed, derivation_tree = ll1_parser_table.parse(tokens)
 
     print("-" * 30)
     print(
@@ -73,7 +73,6 @@ if __name__ == "__main__":
 
     print("-" * 30)
     print(Fore.YELLOW + "Árvore de Derivação:")
-    derivation_tree = ll1_parser_table.build_derivation_tree(parsed_productions)
     for pre, fill, node in RenderTree(derivation_tree):
         cor = Fore.BLACK if isinstance(node.name, NonTerminal) else Fore.RED
         print(f"{pre}{cor}{node.name}")

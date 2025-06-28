@@ -128,19 +128,18 @@ class BaseGrammarTest(unittest.TestCase):
             self.left_p,
             self.right_p,
             self.iden,
-            Grammar.EOF,
+            # Grammar.EOF,
         ]
 
         self.productions = [
             self.E >> [self.T, self.X],                     # E -> T X
             self.X >> [self.plus, self.T, self.X],          # X -> + T X
-            self.X >> [Grammar.EPSILON],                    # X -> ε
+            self.X >> [],                                   # X -> ε
             self.T >> [self.F, self.Y],                     # T -> F Y
             self.Y >> [self.dot, self.F, self.Y],           # Y -> *
-            self.Y >> [Grammar.EPSILON],                    # Y -> ε
+            self.Y >> [],                                   # Y -> ε
             self.F >> [self.left_p, self.E, self.right_p],  # F -> ( E )
             self.F >> [self.iden],                          # F -> id
-            
         ]
 
         self.grammar = Grammar(
@@ -248,7 +247,7 @@ class TestLL1Table(BaseGrammarTest):
                     self.assertIn((non_terminal, symbol), ll1_table.table)
                 else:  # Se o simbolo for EPSILON, verificar se está na tabela de follow
                     for follow_symbol in self.grammar.follow_sets[non_terminal]:
-                        prod = Production(non_terminal, [Grammar.EPSILON])  # ex: X -> ε
+                        prod = non_terminal >> []  # ex: X -> ε
                         # O esperado é que o valor seja a produção do Terminal com EPSILON
                         self.assertEqual(
                             ll1_table.table.get((non_terminal, follow_symbol), None),

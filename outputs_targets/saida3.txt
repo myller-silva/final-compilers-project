@@ -19,7 +19,7 @@ t.pensize(2)
     t.pencolor("cyan")
 
     # Comandos de desenho e atualizacao
-    t.forward( lado )
+    t.forward(lado)
     t.right(90)
     lado = lado + 5
 

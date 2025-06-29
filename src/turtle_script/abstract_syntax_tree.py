@@ -174,8 +174,8 @@ def f_else(root: Node) -> Node:
 def f_loop(root: Node) -> Node:
     """Processa um comando de loop (REPETIR ou ENQUANTO)."""
     child = root.children[0]
-    _, expr, _, cmds, _, _ = child.children
-    return Node(child.name, children=flatten([f_expr(expr), f_commands(cmds)]))
+    _op, expr, _, cmds, _, _ = child.children
+    return Node(_op.name, children=flatten([f_expr(expr), f_commands(cmds)]))
 
 
 def f_generic_command(root: Node) -> Node:

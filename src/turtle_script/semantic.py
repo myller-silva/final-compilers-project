@@ -1,9 +1,9 @@
 from colorama import Fore
 from anytree import RenderTree
+from anytree import Node
 from grammar import *
 from table_parser_ll1 import LL1Table, LL1ParserTable, Token, Tokenizer
 from abstract_syntax_tree import get_ast_root
-from anytree import Node
 
 
 class SemanticProcessor:
@@ -121,6 +121,7 @@ class SemanticProcessor:
             cmd_ir_para: (inteiro.name, inteiro.name),
             cmd_definir_cor: texto,
             cmd_definir_espessura: inteiro.name,
+            cmd_cor_de_fundo: texto,
         }
         commands = [
             node
@@ -142,17 +143,17 @@ class SemanticProcessor:
 
         # VALIDAÇÕES DE EXPRESSÕES EM CONDIÇÕES(SE, ENQUANTO, REPITA)
         mapping_conditions = {
-            kw_se: logico.name,
-            kw_enquanto: logico.name,
-            kw_repita: logico.name,
+            "se": logico.name,
+            "enquanto": logico.name,
+            "repita": inteiro.name,
         }
         conditional_nodes = [
             node
             for node in ast.descendants
-            if isinstance(node.name, Token) and node.name.terminal in mapping_conditions
+            if isinstance(node.name, Token) and node.name.lexeme in mapping_conditions
         ]
         for node in conditional_nodes:
-            expected_type = mapping_conditions[node.name.terminal]
+            expected_type = mapping_conditions[node.name.lexeme]
             expr = node.children[0]
             expr_type = self._validate_expression(expr)
             if expected_type != expr_type:
@@ -283,12 +284,18 @@ if __name__ == "__main__":
         var inteiro: a, b;
         var inteiro: i, j = a, b;
         a = 1;
-        b = 10 + "10";
-        se i < 10 entao
-            i = i + 1;
+        repita 10 vezes
+            avancar 10;
+        fim_repita;
+        se a > b entao
+            avancar 100;
         senao
-            i = i - 1;
+            avancar 50;
         fim_se;
+        enquanto i < 10 faca
+            avancar i;
+            i = i + 1;
+        fim_enquanto;
     fim
     """
     # Tabela LL(1)

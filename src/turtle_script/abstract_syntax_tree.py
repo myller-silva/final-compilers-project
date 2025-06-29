@@ -2,7 +2,7 @@ from colorama import Fore
 from anytree import RenderTree, Node
 from itertools import chain
 from grammar import *
-from table_parser_ll1 import LL1Table, LL1ParserTable, Tokenizer
+from table_parser_ll1 import LL1Table, LL1ParserTable, Token, Tokenizer
 
 
 def is_empty(node: Node) -> bool:
@@ -410,7 +410,7 @@ if __name__ == "__main__":
         for pre, fill, node in RenderTree(ast_root):
             print(
                 f"{pre}"
-                + {True: Fore.BLUE, False: Fore.BLACK}[node.is_leaf]
-                + f"{node.name}"
+                + {True: Fore.BLUE, False: Fore.BLACK}[isinstance(node.name, Token)]
+                + f"{node.name.lexeme if isinstance(node.name, Token) else node.name}"
                 + Fore.RESET
             )

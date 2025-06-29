@@ -322,7 +322,7 @@ class LL1ParserTable:
             if isinstance(top_symbol, Terminal):
                 if top_symbol != current_token.terminal:
                     return False, root
-                top_node.name = current_token.lexeme
+                top_node.name = current_token
                 token_index += 1
                 continue
 
@@ -430,10 +430,13 @@ if __name__ == "__main__":
         print(Fore.BLUE + "\nÁrvore de Derivação:")
         for pre, _, node in RenderTree(derivation_tree):
             node: Node
-            color = {True: Fore.YELLOW, False: Fore.BLACK}[
-                node.is_leaf and node.name is not Grammar.EPSILON
-            ]
-            print(f"{pre}{color}{node.name}{Style.RESET_ALL}")
+            color = Fore.BLACK
+            if node.is_leaf and node.name is not Grammar.EPSILON:
+                color = Fore.YELLOW
+            elif node.is_leaf and isinstance(node.name, NonTerminal):
+                color = Fore.RED
+            name = node.name.lexeme if isinstance(node.name, Token) else node.name
+            print(f"{pre}{color}{name}{Style.RESET_ALL}")
 
         print(
             Fore.BLUE

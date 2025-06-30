@@ -7,6 +7,78 @@ class Generator:
         self.variables = {}  # Armazena as variáveis declaradas
         self.python_code = []  # Lista para armazenar as linhas de código Python
         self.indentation_level = 0  # Nível de indentação atual
+        
+        # Map de tokens para seus processadores correspondentes
+        self.token_processors = {
+            # Declarações e atribuições
+            "dois_pontos": self._process_declaration,
+            "op_atribuicao": self._process_assignment,
+            
+            # Estruturas de controle
+            "kw_se": self._process_conditional,
+            "kw_senao": self._process_else,
+            "kw_repita": self._process_repeat,
+            "kw_enquanto": self._process_while,
+            
+            # Comandos de movimento
+            "cmd_avancar": self._process_forward,
+            "cmd_recuar": self._process_backward,
+            "cmd_girar_direita": self._process_turn_right,
+            "cmd_girar_esquerda": self._process_turn_left,
+            "cmd_ir_para": self._process_goto,
+            
+            # Comandos de caneta
+            "cmd_levantar_caneta": self._process_pen_up,
+            "cmd_abaixar_caneta": self._process_pen_down,
+            
+            # Comandos de configuração
+            "cmd_definir_cor": self._process_set_color,
+            "cmd_definir_espessura": self._process_set_width,
+            "cmd_limpar_tela": self._process_clear,
+            "cmd_cor_de_fundo": self._process_bg_color,
+        }
+        
+        # Map de operações binárias
+        self.binary_operations = {
+            "op_mais": "+",
+            "op_menos": "-",
+            "op_multiplicacao": "*",
+            "op_div": "/",
+            "op_modulo": "%",
+            "op_igualdade": "==",
+            "op_diferente": "!=",
+            "op_menor_que": "<",
+            "op_maior_que": ">",
+            "op_menor_ou_igual": "<=",
+            "op_maior_ou_igual": ">=",
+        }
+        
+        # Map de operações lógicas
+        self.logical_operations = {
+            "op_e": "and",
+            "op_ou": "or",
+        }
+        
+        # Map de operações unárias
+        self.unary_operations = {
+            "op_nao": "not",
+        }
+
+    def register_token_processor(self, token_name: str, processor_function):
+        """Registra um novo processador para um tipo de token específico."""
+        self.token_processors[token_name] = processor_function
+    
+    def register_binary_operation(self, token_name: str, operator: str):
+        """Registra uma nova operação binária."""
+        self.binary_operations[token_name] = operator
+    
+    def register_logical_operation(self, token_name: str, operator: str):
+        """Registra uma nova operação lógica."""
+        self.logical_operations[token_name] = operator
+    
+    def register_unary_operation(self, token_name: str, operator: str):
+        """Registra uma nova operação unária."""
+        self.unary_operations[token_name] = operator
 
     def generate(self, ast: Node, title='Turtle Script') -> str:
         """Gera código Python a partir da AST."""
@@ -51,91 +123,27 @@ class Generator:
             # Verifica se é um token de comando que precisa ser processado especialmente
             token_name = node.name.terminal.name
 
-            # Declarações e atribuições
-            if token_name == "dois_pontos":
-                self._process_declaration(node)
+            # Verifica se existe um processador específico para este token
+            if token_name in self.token_processors:
+                processor = self.token_processors[token_name]
+                processor(node)
                 return
-            elif token_name == "op_atribuicao":
-                self._process_assignment(node)
-                return
-            # Estruturas de controle
-            elif token_name == "kw_se":
-                self._process_conditional(node)
-                return
-            elif token_name == "kw_senao":
-                self._process_else(node)
-                return
-            elif token_name == "kw_repita":
-                self._process_repeat(node)
-                return
-            elif token_name == "kw_enquanto":
-                self._process_while(node)
-                return
-            # Comandos de movimento
-            elif token_name == "cmd_avancar":
-                self._process_forward(node)
-                return
-            elif token_name == "cmd_recuar":
-                self._process_backward(node)
-                return
-            elif token_name == "cmd_girar_direita":
-                self._process_turn_right(node)
-                return
-            elif token_name == "cmd_girar_esquerda":
-                self._process_turn_left(node)
-                return
-            elif token_name == "cmd_ir_para":
-                self._process_goto(node)
-                return
-            # Comandos de caneta
-            elif token_name == "cmd_levantar_caneta":
-                self._process_pen_up(node)
-                return
-            elif token_name == "cmd_abaixar_caneta":
-                self._process_pen_down(node)
-                return
-            # Comandos de configuração
-            elif token_name == "cmd_definir_cor":
-                self._process_set_color(node)
-                return
-            elif token_name == "cmd_definir_espessura":
-                self._process_set_width(node)
-                return
-            elif token_name == "cmd_limpar_tela":
-                self._process_clear(node)
-                return
-            elif token_name == "cmd_cor_de_fundo":
-                self._process_bg_color(node)
-                return
-            # Operações
-            elif token_name == "op_mais":
-                return self._process_binary_operation(node, "+")
-            elif token_name == "op_menos":
-                return self._process_binary_operation(node, "-")
-            elif token_name == "op_multiplicacao":
-                return self._process_binary_operation(node, "*")
-            elif token_name == "op_div":
-                return self._process_binary_operation(node, "/")
-            elif token_name == "op_modulo":
-                return self._process_binary_operation(node, "%")
-            elif token_name == "op_igualdade":
-                return self._process_binary_operation(node, "==")
-            elif token_name == "op_diferente":
-                return self._process_binary_operation(node, "!=")
-            elif token_name == "op_menor_que":
-                return self._process_binary_operation(node, "<")
-            elif token_name == "op_maior_que":
-                return self._process_binary_operation(node, ">")
-            elif token_name == "op_menor_ou_igual":
-                return self._process_binary_operation(node, "<=")
-            elif token_name == "op_maior_ou_igual":
-                return self._process_binary_operation(node, ">=")
-            elif token_name == "op_e":
-                return self._process_logical_operation(node, "and")
-            elif token_name == "op_ou":
-                return self._process_logical_operation(node, "or")
-            elif token_name == "op_nao":
-                return self._process_unary_operation(node, "not")
+            
+            # Verifica se é uma operação binária
+            elif token_name in self.binary_operations:
+                operator = self.binary_operations[token_name]
+                return self._process_binary_operation(node, operator)
+            
+            # Verifica se é uma operação lógica
+            elif token_name in self.logical_operations:
+                operator = self.logical_operations[token_name]
+                return self._process_logical_operation(node, operator)
+            
+            # Verifica se é uma operação unária
+            elif token_name in self.unary_operations:
+                operator = self.unary_operations[token_name]
+                return self._process_unary_operation(node, operator)
+            
             else:
                 # Para outros tokens, retorna a representação
                 return self._process_token(node.name)
@@ -147,65 +155,6 @@ class Generator:
         if node_name == "Program":
             self._process_program(node)
             return
-
-        # Declarações de variáveis - verifica se é um token de dois pontos
-        if isinstance(node.name, Token) and node.name.terminal.name == "dois_pontos":
-            self._process_declaration(node)
-            return
-
-        # Atribuições - verifica se é um token de atribuição
-        if isinstance(node.name, Token) and node.name.terminal.name == "op_atribuicao":
-            self._process_assignment(node)
-            return
-
-        # Estruturas de controle - verifica se são tokens de palavras-chave
-        if isinstance(node.name, Token) and node.name.terminal.name == "kw_se":
-            self._process_conditional(node)
-            return
-
-        if isinstance(node.name, Token) and node.name.terminal.name == "kw_senao":
-            self._process_else(node)
-            return
-
-        if isinstance(node.name, Token) and node.name.terminal.name == "kw_repita":
-            self._process_repeat(node)
-            return
-
-        if isinstance(node.name, Token) and node.name.terminal.name == "kw_enquanto":
-            self._process_while(node)
-            return
-
-        # Operações - verifica se são tokens de operadores
-        if isinstance(node.name, Token):
-            token_name = node.name.terminal.name
-            if token_name == "op_mais":
-                return self._process_binary_operation(node, "+")
-            elif token_name == "op_menos":
-                return self._process_binary_operation(node, "-")
-            elif token_name == "op_multiplicacao":
-                return self._process_binary_operation(node, "*")
-            elif token_name == "op_div":
-                return self._process_binary_operation(node, "/")
-            elif token_name == "op_modulo":
-                return self._process_binary_operation(node, "%")
-            elif token_name == "op_igualdade":
-                return self._process_binary_operation(node, "==")
-            elif token_name == "op_diferente":
-                return self._process_binary_operation(node, "!=")
-            elif token_name == "op_menor_que":
-                return self._process_binary_operation(node, "<")
-            elif token_name == "op_maior_que":
-                return self._process_binary_operation(node, ">")
-            elif token_name == "op_menor_ou_igual":
-                return self._process_binary_operation(node, "<=")
-            elif token_name == "op_maior_ou_igual":
-                return self._process_binary_operation(node, ">=")
-            elif token_name == "op_e":
-                return self._process_logical_operation(node, "and")
-            elif token_name == "op_ou":
-                return self._process_logical_operation(node, "or")
-            elif token_name == "op_nao":
-                return self._process_unary_operation(node, "not")
 
         # Processamento genérico para nós não específicos
         return self._process_generic_node(node)

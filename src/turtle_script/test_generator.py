@@ -6,7 +6,7 @@ Teste do gerador de código Python a partir da AST da linguagem Turtle Script.
 from colorama import Fore
 from anytree import RenderTree
 from grammar import grammar
-from table_parser_ll1 import LL1Table, LL1ParserTable, Tokenizer
+from table_parser_ll1 import LL1Table, LL1ParserTable, Token, Tokenizer
 from abstract_syntax_tree import get_ast_root
 from generator import Generator
 import os
@@ -17,8 +17,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "s
 
 output_path = "outputs"
 
-def test_generator():
-    """Testa o gerador com os exemplos de entrada."""
+if __name__ == "__main__":
+    print(Fore.CYAN + "Testador do Gerador de Código Python" + Fore.RESET)
+    print()
 
     # Carrega os arquivos de entrada
     input_files = [
@@ -65,7 +66,15 @@ def test_generator():
 
             print(Fore.MAGENTA + "AST gerada:" + Fore.RESET)
             for pre, fill, node in RenderTree(ast_root):
-                print(f"{pre}{node.name}")
+                if isinstance(node.name, Token):
+                    print(
+                        f"{pre}{Fore.YELLOW}{node.name.lexeme} "
+                        + Fore.BLACK
+                        + f"({node.name.terminal})"
+                        + Fore.RESET
+                    )
+                else:
+                    print(f"{pre}{node.name}")
 
             print("-" * 40)
 
@@ -89,10 +98,3 @@ def test_generator():
             print(Fore.RED + f"Erro durante o processamento: {e}" + Fore.RESET)
 
         print()
-
-
-
-if __name__ == "__main__":
-    print(Fore.CYAN + "Testador do Gerador de Código Python" + Fore.RESET)
-    print()
-    test_generator()

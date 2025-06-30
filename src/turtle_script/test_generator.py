@@ -1,7 +1,4 @@
-#!/usr/bin/env python3
-"""
-Teste do gerador de código Python a partir da AST da linguagem Turtle Script.
-"""
+"""Teste do gerador de código Python a partir da AST da linguagem Turtle Script."""
 
 from colorama import Fore
 from anytree import RenderTree

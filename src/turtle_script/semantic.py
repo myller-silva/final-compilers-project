@@ -119,9 +119,11 @@ class SemanticProcessor:
             cmd_girar_direita: inteiro.name,
             cmd_girar_esquerda: inteiro.name,
             cmd_ir_para: (inteiro.name, inteiro.name),
-            cmd_definir_cor: texto,
+            cmd_definir_cor: texto.name,
             cmd_definir_espessura: inteiro.name,
-            cmd_cor_de_fundo: texto,
+            cmd_cor_de_fundo: texto.name,
+            cmd_definir_velocidade: inteiro.name,  # NOTE: NOVO
+            cmd_desenhar_circulo: real.name,    # NOTE: NOVO
         }
         commands = [
             node

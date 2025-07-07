@@ -23,6 +23,7 @@ if __name__ == "__main__":
         "./inputs/entrada1.txt",
         "./inputs/entrada2.txt",
         "./inputs/entrada3.txt",
+        "./inputs/entrada4.txt",
     ]
 
     # Tabela LL(1)

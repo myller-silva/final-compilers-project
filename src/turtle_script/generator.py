@@ -26,6 +26,7 @@ class Generator:
             "cmd_girar_direita": self._process_turn_right,
             "cmd_girar_esquerda": self._process_turn_left,
             "cmd_ir_para": self._process_goto,
+            "cmd_desenhar_circulo": self._process_draw_circle,  # NOVO
             
             # Comandos de caneta
             "cmd_levantar_caneta": self._process_pen_up,
@@ -36,6 +37,7 @@ class Generator:
             "cmd_definir_espessura": self._process_set_width,
             "cmd_limpar_tela": self._process_clear,
             "cmd_cor_de_fundo": self._process_bg_color,
+            "cmd_definir_velocidade": self._process_set_speed,  # NOVO
         }
         
         # Map de operações binárias
@@ -102,7 +104,23 @@ class Generator:
         self._add_line("turtle.done()")
 
         return "\n".join(self.python_code)
+    
+    def _process_set_speed(self, node: Node):
+        """Processa comando definir_velocidade."""
+        if len(node.children) > 0:
+            speed = self._process_node(node.children[0])
+            self._add_line(f"t.speed({speed})")
+        else:
+            self._add_line("t.speed(1)")  # velocidade padrão
 
+    def _process_draw_circle(self, node: Node):
+        """Processa comando desenhar_circulo."""
+        if len(node.children) > 0:
+            radius = self._process_node(node.children[0])
+            self._add_line(f"t.circle({radius})")
+        else:
+            self._add_line("t.circle(10)")  # raio padrão
+    
     def _add_line(self, line: str):
         """Adiciona uma linha de código com a indentação apropriada."""
         if line.strip() == "":

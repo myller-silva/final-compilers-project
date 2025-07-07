@@ -30,6 +30,12 @@ cmd_definir_cor = Terminal("cmd_definir_cor", r"\b(definir_cor)\b")
 cmd_definir_espessura = Terminal("cmd_definir_espessura", r"\b(definir_espessura)\b")
 cmd_limpar_tela = Terminal("cmd_limpar_tela", r"\b(limpar_tela)\b")
 cmd_cor_de_fundo = Terminal("cmd_cor_de_fundo", r"\b(cor_de_fundo)\b")
+
+# NOTE: Novo comando adicionado
+cmd_definir_velocidade = Terminal("cmd_definir_velocidade", r"\b(definir_velocidade)\b") 
+# NOTE: Novo comando adicionado
+cmd_desenhar_circulo = Terminal("cmd_desenhar_circulo", r"\b(desenhar_circulo)\b") 
+
 real = Terminal("real", r"\d+\.\d+")
 inteiro = Terminal("inteiro", r"\d+")
 texto = Terminal("texto", r'"[^"]*"')
@@ -87,6 +93,10 @@ terminals = [
     cmd_definir_espessura,
     cmd_limpar_tela,
     cmd_cor_de_fundo,
+    # NOTE: Novo comando adicionado
+    cmd_definir_velocidade,
+    # NOTE: Novo comando adicionado
+    cmd_desenhar_circulo,
     real,
     inteiro,
     texto,
@@ -238,11 +248,15 @@ productions = [
     Movement >> [cmd_girar_direita, Expr, ponto_virgula],
     Movement >> [cmd_girar_esquerda, Expr, ponto_virgula],
     Movement >> [cmd_ir_para, Expr, Expr, ponto_virgula],
+    # NOTE: Novo comando adicionado
+    Movement >> [cmd_desenhar_circulo, Expr, ponto_virgula],
     # --- PenControl ---
     PenControl >> [cmd_levantar_caneta, ponto_virgula],
     PenControl >> [cmd_abaixar_caneta, ponto_virgula],
     PenControl >> [cmd_definir_cor, Expr, ponto_virgula],
     PenControl >> [cmd_definir_espessura, Expr, ponto_virgula],
+    # NOTE: Novo comando adicionado
+    PenControl >> [cmd_definir_velocidade, Expr, ponto_virgula], 
     # --- ScreenControl ---
     ScreenControl >> [cmd_limpar_tela, ponto_virgula],
     ScreenControl >> [cmd_cor_de_fundo, Expr, ponto_virgula],

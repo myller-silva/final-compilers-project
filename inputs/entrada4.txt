@@ -1,0 +1,36 @@
+inicio
+    var inteiro: velocidade, contador;
+    var real: raio_atual;
+    
+    // Configurações iniciais
+    velocidade = 1;
+    raio_atual = 120.0;
+    contador = 0;
+    
+    // Preparar tela
+    cor_de_fundo "black";
+    definir_espessura 2;
+    
+    // Posicionar no centro
+    levantar_caneta;
+    ir_para 0 0;
+    abaixar_caneta;
+    
+    // Círculos com cores alternadas
+    repita 21 vezes
+        definir_velocidade velocidade;
+        
+        // Alternar cores a cada círculo
+        se contador % 2 == 0 entao
+            definir_cor "red";
+        senao
+            definir_cor "white";
+        fim_se;
+        
+        desenhar_circulo raio_atual;
+        
+        raio_atual = raio_atual - 12.0;
+        contador = contador + 1;
+        velocidade = velocidade + 2;
+    fim_repita;
+fim

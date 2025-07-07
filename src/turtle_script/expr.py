@@ -144,13 +144,17 @@ productions = [
     Literal >> [inteiro],
 ]
 
-# print("Productions:")
-print(f"{Fore.LIGHTYELLOW_EX}Productions:")
-for prod in productions:
-    print(f"{Fore.LIGHTBLUE_EX}{prod.lhs}", end="")
-    print(f"{Fore.LIGHTBLACK_EX} -> ", end="")
-    print(f"{Fore.LIGHTBLUE_EX}{' '.join(str(sym) for sym in prod.rhs)}")
+print(f"{Fore.LIGHTYELLOW_EX}Productions:{Fore.RESET}")
 
+for prod in productions:
+    print(f"{Fore.LIGHTMAGENTA_EX}{prod.lhs}", end="")
+    print(f"{Fore.LIGHTBLACK_EX} -> ", end="")
+    for sym in prod.rhs:
+        if isinstance(sym, Terminal):
+            print(f"{Fore.LIGHTGREEN_EX}{sym}", end=" ")
+        elif isinstance(sym, NonTerminal):
+            print(f"{Fore.LIGHTMAGENTA_EX}{sym}", end=" ")
+    print(Fore.RESET)
 grammar = Grammar(
     start_symbol=Expr,
     terminals=terminals,
